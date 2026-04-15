@@ -365,7 +365,7 @@ export default function App() {
           >
             <a href="./" className="shrink-0 cursor-pointer transition-transform hover:scale-105 active:scale-95">
               <img 
-                src="logo.png" 
+                src="./logo.png" 
                 alt="BuNaMix Logo" 
                 className={cn(
                   "object-contain transition-all duration-500", 
