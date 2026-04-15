@@ -2,7 +2,5 @@
   "name": "Bunamix",
   "description": "Bunamix",
   "requestFramePermissions": [],
-  "majorCapabilities": [],
-  "C7": [],
-  "Xp": []
+  "majorCapabilities": []
 }
