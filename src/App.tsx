@@ -29,13 +29,75 @@ const formatTime = (time: number) => {
   return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
+const QueueComponent = ({ 
+  queue, 
+  currentIndex, 
+  playSpecificVideo 
+}: { 
+  queue: PlaylistItem[], 
+  currentIndex: number, 
+  playSpecificVideo: (index: number) => void 
+}) => (
+  <div className="flex flex-col gap-2 flex-1 min-h-0 pt-4 -mt-[17px] overflow-hidden">
+    <div className="text-sm uppercase font-bold tracking-widest border-b-2 border-brutal-black pb-1 flex justify-between items-center shrink-0">
+      <div className="flex items-center gap-3">
+        <span>Up Next</span>
+      </div>
+      <span className="bg-brutal-black text-white px-2 py-0.5">{currentIndex + 1} / {queue.length}</span>
+    </div>
+    <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar py-2 flex-1">
+      {queue.map((item, index) => {
+        if (index < currentIndex) return null;
+
+        const isPlaying = index === currentIndex;
+        
+        return (
+          <div 
+            key={`${item.id}-${index}`}
+            onClick={() => playSpecificVideo(index)}
+            className={cn(
+              "flex items-center gap-4 p-2 border-2 cursor-pointer transition-all shrink-0",
+              isPlaying 
+                ? "border-brutal-black bg-brutal-green shadow-[4px_4px_0_0_#000]" 
+                : "border-brutal-black bg-white hover:bg-brutal-gray shadow-[4px_4px_0_0_#000]"
+            )}
+          >
+            <div className="w-[100px] h-[56px] bg-brutal-black border-2 border-brutal-black overflow-hidden shrink-0 relative">
+              <img 
+                src={item.thumbnail} 
+                alt={item.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold uppercase truncate">
+                {item.title}
+              </div>
+              <div className="text-xs font-bold text-brutal-black/60 uppercase truncate">
+                {item.channelTitle}
+              </div>
+            </div>
+            <div className={cn(
+              "text-xl font-display shrink-0 px-2",
+              isPlaying ? "text-brutal-black" : "text-brutal-black/30"
+            )}>
+              {isPlaying ? "PLAYING" : `#${index + 1}`}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+);
+
 export default function App() {
   const [inputValue, setInputValue] = useState('');
   const [playlists, setPlaylists] = useState<PlaylistInfo[]>(() => {
     const saved = localStorage.getItem('savedPlaylists');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         return [];
       }
@@ -263,59 +325,6 @@ export default function App() {
 
   const currentVideo = queue[currentIndex];
 
-  const QueueComponent = () => (
-    <div className="flex flex-col gap-2 flex-1 min-h-0 pt-4 -mt-[17px]">
-      <div className="text-sm uppercase font-bold tracking-widest border-b-2 border-brutal-black pb-1 flex justify-between items-center shrink-0">
-        <div className="flex items-center gap-3">
-          <span>Up Next</span>
-        </div>
-        <span className="bg-brutal-black text-white px-2 py-0.5">{currentIndex + 1} / {queue.length}</span>
-      </div>
-      <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar py-2 max-h-[600px]">
-        {queue.map((item, index) => {
-          if (index < currentIndex) return null;
-
-          const isPlaying = index === currentIndex;
-          
-          return (
-            <div 
-              key={`${item.id}-${index}`}
-              onClick={() => playSpecificVideo(index)}
-              className={cn(
-                "flex items-center gap-4 p-2 border-2 cursor-pointer transition-all shrink-0",
-                isPlaying 
-                  ? "border-brutal-black bg-brutal-green shadow-[4px_4px_0_0_#000]" 
-                  : "border-brutal-black bg-white hover:bg-brutal-gray shadow-[4px_4px_0_0_#000]"
-              )}
-            >
-              <div className="w-[100px] h-[56px] bg-brutal-black border-2 border-brutal-black overflow-hidden shrink-0 relative">
-                <img 
-                  src={item.thumbnail} 
-                  alt={item.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold uppercase truncate">
-                  {item.title}
-                </div>
-                <div className="text-xs font-bold text-brutal-black/60 uppercase truncate">
-                  {item.channelTitle}
-                </div>
-              </div>
-              <div className={cn(
-                "text-xl font-display shrink-0 px-2",
-                isPlaying ? "text-brutal-black" : "text-brutal-black/30"
-              )}>
-                {isPlaying ? "PLAYING" : `#${index + 1}`}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-brutal-bg text-brutal-black font-sans flex flex-col">
       <div className={cn(
@@ -327,7 +336,7 @@ export default function App() {
         
         {/* Sidebar */}
         <div className={cn(
-          "flex-col gap-8 h-full w-full relative",
+          "flex-col gap-4 w-full relative lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]",
           (!queue.length || isSidebarOpen) ? "flex" : "hidden"
         )}>
           {/* Toggle Sidebar Button (When Open) */}
@@ -347,12 +356,27 @@ export default function App() {
             initial={{ y: -50, opacity: 0, scale: 0.9 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="flex flex-col items-center justify-center gap-4 text-6xl font-display leading-none tracking-tight -mt-[7px] -mb-[12px]"
+            className={cn(
+              "flex flex-col items-center justify-center transition-all duration-500",
+              queue.length > 0 
+                ? "gap-2 text-5xl -mt-[10px] -mb-[5px]" 
+                : "gap-4 text-7xl -mt-[15px] -mb-[20px]"
+            )}
           >
             <a href="./" className="shrink-0 cursor-pointer transition-transform hover:scale-105 active:scale-95">
-              <img src="logo.png" alt="BuNaMix Logo" className="w-[150px] h-[150px] object-contain" />
+              <img 
+                src="logo.png" 
+                alt="BuNaMix Logo" 
+                className={cn(
+                  "object-contain transition-all duration-500", 
+                  queue.length > 0 ? "w-[150px] h-[150px]" : "w-[200px] h-[200px]"
+                )} 
+              />
             </a>
-            <span className="-mt-[27px] h-[58px] flex items-center justify-center">
+            <span className={cn(
+              "font-display leading-none tracking-tight flex items-center justify-center transition-all duration-500", 
+              queue.length > 0 ? "-mt-[20px] h-[50px]" : "-mt-[35px] h-[70px]"
+            )}>
               BuNa<span style={{ color: '#89d07e' }}>Mix</span>
             </span>
           </motion.div>
@@ -437,7 +461,13 @@ export default function App() {
           )}
 
           {/* Queue (Only shown in sidebar when open) */}
-          {isSidebarOpen && queue.length > 0 && <QueueComponent />}
+          {isSidebarOpen && queue.length > 0 && (
+            <QueueComponent 
+              queue={queue} 
+              currentIndex={currentIndex} 
+              playSpecificVideo={playSpecificVideo} 
+            />
+          )}
         </div>
 
         {/* Main View */}
@@ -573,7 +603,11 @@ export default function App() {
             {/* Queue (Shown below player when sidebar is closed) */}
             {!isSidebarOpen && queue.length > 0 && (
               <div className="w-full">
-                <QueueComponent />
+                <QueueComponent 
+                  queue={queue} 
+                  currentIndex={currentIndex} 
+                  playSpecificVideo={playSpecificVideo} 
+                />
               </div>
             )}
 
