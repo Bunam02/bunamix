@@ -1,4 +1,4 @@
-const API_KEY = 'AIzaSyAld-Dq-5ulLHHVv5UoLj5KHxJxasQ4GtA';
+const API_KEY = 'AIzaSyB0L1s7Nh_zybhYdEi_feUrQdhqS8Q266s';
 
 export interface PlaylistItem {
   id: string;

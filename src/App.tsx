@@ -8,7 +8,7 @@ import YouTube, { YouTubeProps } from 'react-youtube';
 import { 
   Play, Shuffle, Trash2, Plus, ListVideo, 
   SkipForward, SkipBack, Loader2, AlertCircle,
-  Volume2, Pause, Repeat, Repeat1, PanelLeftClose, PanelLeftOpen
+  Volume2, Pause, Repeat, Repeat1, PanelLeftClose, PanelLeftOpen, Moon
 } from 'lucide-react';
 import { 
   fetchPlaylistInfo, fetchPlaylistItems, extractPlaylistId, 
@@ -43,7 +43,7 @@ const QueueComponent = ({
       <div className="flex items-center gap-3">
         <span>Up Next</span>
       </div>
-      <span className="bg-brutal-black text-white px-2 py-0.5 2xl:px-3 2xl:py-1">{currentIndex + 1} / {queue.length}</span>
+      <span className="bg-brutal-black text-brutal-white px-2 py-0.5 2xl:px-3 2xl:py-1">{currentIndex + 1} / {queue.length}</span>
     </div>
     <div className="flex flex-col gap-3 2xl:gap-4 overflow-y-auto pr-2 custom-scrollbar py-2 flex-1">
       {queue.map((item, index) => {
@@ -58,8 +58,8 @@ const QueueComponent = ({
             className={cn(
               "flex items-center gap-4 2xl:gap-6 p-2 2xl:p-4 border-2 2xl:border-4 cursor-pointer transition-all shrink-0",
               isPlaying 
-                ? "border-brutal-black bg-brutal-green shadow-[4px_4px_0_0_#000] 2xl:shadow-[6px_6px_0_0_#000]" 
-                : "border-brutal-black bg-white hover:bg-brutal-gray shadow-[4px_4px_0_0_#000] 2xl:shadow-[6px_6px_0_0_#000]"
+                ? "border-brutal-black bg-brutal-green shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)]" 
+                : "border-brutal-black bg-brutal-white hover:bg-brutal-gray shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)]"
             )}
           >
             <div className="w-[100px] h-[56px] 2xl:w-[160px] 2xl:h-[90px] bg-brutal-black border-2 2xl:border-4 border-brutal-black overflow-hidden shrink-0 relative">
@@ -116,6 +116,12 @@ export default function App() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [volume, setVolume] = useState(100);
+  const [showVolumeIndicator, setShowVolumeIndicator] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme');
+    return (saved as 'light' | 'dark') || 'light';
+  });
   
   const playerRef = useRef<any>(null);
   const autoplayRef = useRef(isAutoplayEnabled);
@@ -123,7 +129,50 @@ export default function App() {
   const currentIndexRef = useRef(currentIndex);
   const queueRef = useRef(queue);
   const isPlayingRef = useRef(isPlaying);
+  const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    if (!overlay) return;
+
+    const handleNativeWheel = (e: WheelEvent) => {
+      e.preventDefault(); // Prevent page scroll
+      if (!playerRef.current) return;
+      
+      const delta = e.deltaY > 0 ? -1 : 1;
+      setVolume(prev => {
+        const newVolume = Math.max(0, Math.min(100, prev + delta));
+        if (playerRef.current) {
+          playerRef.current.setVolume(newVolume);
+        }
+        return newVolume;
+      });
+      
+      setShowVolumeIndicator(true);
+      if (volumeTimeoutRef.current) {
+        clearTimeout(volumeTimeoutRef.current);
+      }
+      volumeTimeoutRef.current = setTimeout(() => {
+        setShowVolumeIndicator(false);
+      }, 1500);
+    };
+
+    overlay.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => {
+      overlay.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, [queue.length, initialVideoId]);
+
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
   useEffect(() => {
     autoplayRef.current = isAutoplayEnabled;
   }, [isAutoplayEnabled]);
@@ -291,9 +340,20 @@ export default function App() {
     }
   };
 
+  const handleShuffle = () => {
+    if (queue.length <= 1) return;
+    const currentItem = queue[currentIndex];
+    const remaining = queue.filter((_, idx) => idx !== currentIndex);
+    const shuffled = [...remaining].sort(() => Math.random() - 0.5);
+    setQueue([currentItem, ...shuffled]);
+    setCurrentIndex(0);
+  };
+
   const onPlayerReady: YouTubeProps['onReady'] = (event) => {
     playerRef.current = event.target;
     setIsPlayerReady(true);
+    const currentVol = event.target.getVolume();
+    setVolume(currentVol);
     if (isPlayingRef.current) {
       event.target.playVideo();
     }
@@ -345,7 +405,7 @@ export default function App() {
             <div className="fixed top-4 left-4 z-50">
               <button 
                 onClick={() => setIsSidebarOpen(false)}
-                className="p-2 bg-white border-2 border-brutal-black hover:bg-brutal-green transition-colors shadow-[4px_4px_0_0_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+                className="p-2 bg-brutal-white border-2 border-brutal-black hover:bg-brutal-green transition-colors shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
                 title="Hide Sidebar"
               >
                 <PanelLeftClose className="w-5 h-5" />
@@ -368,7 +428,7 @@ export default function App() {
                 src="./logo.png" 
                 alt="BuNaMix Logo" 
                 className={cn(
-                  "object-contain transition-all duration-500", 
+                  "object-contain transition-all duration-500 invert dark:invert-0", 
                   queue.length > 0 ? "w-[150px] h-[150px]" : "w-[180px] h-[180px] 2xl:w-[260px] 2xl:h-[260px]"
                 )} 
               />
@@ -393,19 +453,19 @@ export default function App() {
                   placeholder="www.youtube.com/playlist?list="
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  className="flex-1 bg-white border-2 2xl:border-4 border-brutal-black p-3 2xl:p-5 text-brutal-black font-bold text-sm 2xl:text-xl outline-none focus:bg-brutal-gray transition-colors placeholder:text-brutal-black/40 shadow-[4px_4px_0_0_#000] 2xl:shadow-[6px_6px_0_0_#000]"
+                  className="flex-1 bg-brutal-white border-2 2xl:border-4 border-brutal-black p-3 2xl:p-5 text-brutal-black font-bold text-sm 2xl:text-xl outline-none focus:bg-brutal-gray transition-colors placeholder:text-brutal-black/40 shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)]"
                   disabled={isLoading}
                 />
                 <button
                   type="submit"
                   disabled={isLoading || !inputValue.trim()}
-                  className="bg-white border-2 2xl:border-4 border-brutal-black text-brutal-black px-4 2xl:px-8 hover:bg-brutal-green disabled:opacity-50 transition-colors flex items-center justify-center shrink-0 shadow-[4px_4px_0_0_#000] 2xl:shadow-[6px_6px_0_0_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+                  className="bg-brutal-white border-2 2xl:border-4 border-brutal-black text-brutal-black px-4 2xl:px-8 hover:bg-brutal-green disabled:opacity-50 transition-colors flex items-center justify-center shrink-0 shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
                 >
                   {isLoading ? <Loader2 className="w-5 h-5 2xl:w-8 2xl:h-8 animate-spin" /> : <Plus className="w-6 h-6 2xl:w-8 2xl:h-8 stroke-[3]" />}
                 </button>
               </form>
               {error && (
-                <div className="bg-brutal-black text-white p-2 2xl:p-4 text-sm 2xl:text-lg font-bold mt-2 2xl:mt-4 uppercase flex items-start gap-2 2xl:gap-3">
+                <div className="bg-brutal-black text-brutal-white p-2 2xl:p-4 text-sm 2xl:text-lg font-bold mt-2 2xl:mt-4 uppercase flex items-start gap-2 2xl:gap-3">
                   <AlertCircle className="w-5 h-5 2xl:w-7 2xl:h-7 shrink-0" />
                   <p>{error}</p>
                 </div>
@@ -418,7 +478,7 @@ export default function App() {
             <div className="flex flex-col gap-2 2xl:gap-4 shrink-0 max-h-[260px] 2xl:max-h-[400px] w-full">
               <div className="text-sm 2xl:text-xl uppercase font-bold tracking-widest border-b-2 2xl:border-b-4 border-brutal-black pb-1 2xl:pb-2 flex justify-between items-center shrink-0">
                 <span>Your Playlists</span>
-                <span className="bg-brutal-black text-white px-2 py-0.5 2xl:px-3 2xl:py-1">{playlists.length}</span>
+                <span className="bg-brutal-black text-brutal-white px-2 py-0.5 2xl:px-3 2xl:py-1">{playlists.length}</span>
               </div>
               <div className="space-y-3 2xl:space-y-4 overflow-y-auto pr-2 custom-scrollbar py-2 flex-1 min-h-0">
                 {playlists.length === 0 ? (
@@ -430,7 +490,7 @@ export default function App() {
                     <div 
                       key={playlist.id} 
                       onClick={() => handleShuffleAndPlay(playlist.id)}
-                      className="flex items-center gap-3 2xl:gap-5 bg-white border-2 2xl:border-4 border-brutal-black p-2 2xl:p-4 group transition-colors hover:bg-brutal-gray shadow-[4px_4px_0_0_#000] 2xl:shadow-[6px_6px_0_0_#000] cursor-pointer"
+                      className="flex items-center gap-3 2xl:gap-5 bg-brutal-white border-2 2xl:border-4 border-brutal-black p-2 2xl:p-4 group transition-colors hover:bg-brutal-gray shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)] cursor-pointer"
                     >
                       <img 
                         src={playlist.thumbnail} 
@@ -448,7 +508,7 @@ export default function App() {
                           e.stopPropagation();
                           handleRemovePlaylist(playlist.id);
                         }}
-                        className="p-2 2xl:p-3 text-brutal-black hover:bg-brutal-black hover:text-white border-2 2xl:border-4 border-transparent hover:border-brutal-black transition-colors shrink-0"
+                        className="p-2 2xl:p-3 text-brutal-black hover:bg-brutal-black hover:text-brutal-white border-2 2xl:border-4 border-transparent hover:border-brutal-black transition-colors shrink-0"
                         title="Remove playlist"
                       >
                         <Trash2 className="w-5 h-5 2xl:w-7 2xl:h-7" />
@@ -486,47 +546,69 @@ export default function App() {
             )}>
               <button 
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 bg-white border-2 border-brutal-black hover:bg-brutal-green transition-colors shadow-[4px_4px_0_0_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+                className="p-2 bg-brutal-white border-2 border-brutal-black hover:bg-brutal-green transition-colors shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
                 title={isSidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
               >
                 {isSidebarOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
               </button>
             </div>
 
-            {/* Player Mockup */}
-            <div className="w-full aspect-video bg-brutal-black border-4 border-brutal-black flex items-center justify-center relative overflow-hidden shadow-[8px_8px_0_0_#000]">
-              {/* ⭐️ 변경: queue가 있고 initialVideoId가 세팅되었을 때만 렌더링 */}
-              {queue.length > 0 && initialVideoId ? (
-                <YouTube
-                  videoId={initialVideoId} // ⭐️ 핵심: 리렌더링 방지를 위해 초기 ID로 고정
-                  opts={{
-                    width: '100%',
-                    height: '100%',
-                    playerVars: {
-                      autoplay: 1,
-                      modestbranding: 1,
-                      rel: 0,
-                    },
-                  }}
-                  onReady={onPlayerReady}
-                  onStateChange={onPlayerStateChange}
-                  className="absolute inset-0 w-full h-full"
-                  iframeClassName="w-full h-full"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center text-white">
-                  <div className="w-20 h-20 bg-brutal-green border-4 border-white rounded-full flex items-center justify-center text-brutal-black mb-4">
-                    <Play className="w-10 h-10 ml-2 fill-current" />
+            {/* Player Area Wrapper */}
+            <div className="flex flex-col gap-4 2xl:gap-6 w-full relative">
+              {/* Player Mockup */}
+              <div className="w-full aspect-video bg-brutal-black border-4 border-brutal-black flex items-center justify-center relative overflow-hidden shadow-[8px_8px_0_0_var(--color-brutal-black)]">
+                {/* ⭐️ 변경: queue가 있고 initialVideoId가 세팅되었을 때만 렌더링 */}
+                {queue.length > 0 && initialVideoId ? (
+                  <>
+                    <YouTube
+                      videoId={initialVideoId} // ⭐️ 핵심: 리렌더링 방지를 위해 초기 ID로 고정
+                      opts={{
+                        width: '100%',
+                        height: '100%',
+                        playerVars: {
+                          autoplay: 1,
+                          modestbranding: 1,
+                          rel: 0,
+                        },
+                      }}
+                      onReady={onPlayerReady}
+                      onStateChange={onPlayerStateChange}
+                      className="absolute inset-0 w-full h-full"
+                      iframeClassName="w-full h-full"
+                    />
+                    {/* Overlay to capture wheel events over iframe */}
+                    <div 
+                      ref={overlayRef}
+                      className="absolute top-0 left-0 right-0 bottom-[60px] z-10 cursor-pointer"
+                      onClick={() => {
+                        if (isPlaying) {
+                          playerRef.current?.pauseVideo();
+                        } else {
+                          playerRef.current?.playVideo();
+                        }
+                      }}
+                    />
+                    {/* Volume Indicator Overlay */}
+                    {showVolumeIndicator && (
+                      <div className="absolute top-[10%] left-1/2 -translate-x-1/2 pointer-events-none z-50 bg-black/70 px-4 py-2 rounded text-white shadow-md">
+                        <span className="text-lg font-medium">{volume}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-brutal-white">
+                    <div className="w-20 h-20 bg-brutal-green border-4 border-brutal-white rounded-full flex items-center justify-center text-brutal-black mb-4">
+                      <Play className="w-10 h-10 ml-2 fill-current" />
+                    </div>
+                    <p className="font-display text-2xl tracking-widest uppercase">READY</p>
                   </div>
-                  <p className="font-display text-2xl tracking-widest uppercase">READY</p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Player Controls */}
-            {currentVideo && (
-              <div className="flex flex-col gap-4 2xl:gap-6 bg-white border-4 border-brutal-black p-4 2xl:p-6 pt-[13px] 2xl:pt-[20px] pl-4 2xl:pl-6 shadow-[6px_6px_0_0_#000] 2xl:shadow-[8px_8px_0_0_#000] shrink-0">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4 2xl:gap-8">
+              {/* Player Controls */}
+              {currentVideo && (
+                <div className="flex flex-col gap-4 2xl:gap-6 bg-brutal-white border-4 border-brutal-black p-4 2xl:p-6 pt-[13px] 2xl:pt-[20px] pl-4 2xl:pl-6 shadow-[6px_6px_0_0_var(--color-brutal-black)] 2xl:shadow-[8px_8px_0_0_var(--color-brutal-black)] shrink-0">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4 2xl:gap-8">
                   <div className="flex-1 min-w-0 w-full text-center md:text-left">
                     <div className="text-xl 2xl:text-3xl font-display uppercase truncate">
                       {currentVideo.title}
@@ -537,10 +619,17 @@ export default function App() {
                   </div>
                   <div className="flex items-center gap-4 2xl:gap-6 shrink-0 h-[52px] 2xl:h-[72px] p-0 m-0">
                     <button 
+                      onClick={handleShuffle}
+                      className="p-3 2xl:p-4 bg-brutal-white border-2 2xl:border-4 border-brutal-black hover:bg-brutal-green transition-colors shadow-[2px_2px_0_0_var(--color-brutal-black)] 2xl:shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                      title="Shuffle Playlist"
+                    >
+                      <Shuffle className="w-6 h-6 2xl:w-8 2xl:h-8" />
+                    </button>
+                    <button 
                       onClick={() => setRepeatMode(prev => prev === 'off' ? 'one' : 'off')}
                       className={cn(
-                        "p-3 2xl:p-4 border-2 2xl:border-4 border-brutal-black transition-colors shadow-[2px_2px_0_0_#000] 2xl:shadow-[4px_4px_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
-                        repeatMode !== 'off' ? "bg-brutal-green text-brutal-black" : "bg-white text-brutal-black hover:bg-brutal-gray"
+                        "p-3 2xl:p-4 border-2 2xl:border-4 border-brutal-black transition-colors shadow-[2px_2px_0_0_var(--color-brutal-black)] 2xl:shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
+                        repeatMode !== 'off' ? "bg-brutal-green text-brutal-black" : "bg-brutal-white text-brutal-black hover:bg-brutal-gray"
                       )}
                       title={`Repeat: ${repeatMode}`}
                     >
@@ -549,7 +638,7 @@ export default function App() {
                     <button 
                       onClick={playPrevious}
                       disabled={currentIndex === 0 && repeatMode !== 'all'}
-                      className="p-3 2xl:p-4 bg-white border-2 2xl:border-4 border-brutal-black hover:bg-brutal-green disabled:opacity-30 transition-colors shadow-[2px_2px_0_0_#000] 2xl:shadow-[4px_4px_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                      className="p-3 2xl:p-4 bg-brutal-white border-2 2xl:border-4 border-brutal-black hover:bg-brutal-green disabled:opacity-30 transition-colors shadow-[2px_2px_0_0_var(--color-brutal-black)] 2xl:shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                     >
                       <SkipBack className="w-6 h-6 2xl:w-8 2xl:h-8" />
                     </button>
@@ -561,14 +650,14 @@ export default function App() {
                           playerRef.current?.playVideo();
                         }
                       }}
-                      className="w-[60px] h-[60px] 2xl:w-[80px] 2xl:h-[80px] bg-brutal-black text-white border-2 2xl:border-4 border-brutal-black flex items-center justify-center hover:bg-brutal-green hover:text-brutal-black transition-colors shadow-[4px_4px_0_0_#000] 2xl:shadow-[6px_6px_0_0_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+                      className="w-[60px] h-[60px] 2xl:w-[80px] 2xl:h-[80px] bg-brutal-white text-brutal-black border-2 2xl:border-4 border-brutal-black flex items-center justify-center hover:bg-brutal-green transition-colors shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
                     >
                       {isPlaying ? <Pause className="w-8 h-8 2xl:w-10 2xl:h-10 fill-current" /> : <Play className="w-8 h-8 2xl:w-10 2xl:h-10 fill-current ml-1" />}
                     </button>
                     <button 
                       onClick={playNext}
                       disabled={currentIndex === queue.length - 1 && repeatMode !== 'all'}
-                      className="p-3 2xl:p-4 bg-white border-2 2xl:border-4 border-brutal-black hover:bg-brutal-green disabled:opacity-30 transition-colors shadow-[2px_2px_0_0_#000] 2xl:shadow-[4px_4px_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                      className="p-3 2xl:p-4 bg-brutal-white border-2 2xl:border-4 border-brutal-black hover:bg-brutal-green disabled:opacity-30 transition-colors shadow-[2px_2px_0_0_var(--color-brutal-black)] 2xl:shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                     >
                       <SkipForward className="w-6 h-6 2xl:w-8 2xl:h-8" />
                     </button>
@@ -599,10 +688,11 @@ export default function App() {
                 </div>
               </div>
             )}
+            </div>
 
             {/* Queue (Shown below player when sidebar is closed) */}
             {!isSidebarOpen && queue.length > 0 && (
-              <div className="w-full">
+              <div className="w-full h-[500px] 2xl:h-[700px] flex flex-col">
                 <QueueComponent 
                   queue={queue} 
                   currentIndex={currentIndex} 
@@ -616,6 +706,14 @@ export default function App() {
         )}
       </div>
       
+      {/* Theme Toggle Button */}
+      <button
+        onClick={() => setTheme(prev => prev === 'light' ? 'dark' : 'light')}
+        className="fixed bottom-4 right-4 2xl:bottom-8 2xl:right-8 p-2 2xl:p-3 bg-brutal-white border-2 2xl:border-4 border-brutal-black hover:bg-brutal-gray transition-colors z-50 rounded-full"
+        title="Toggle Theme"
+      >
+        <Moon className="w-5 h-5 2xl:w-6 2xl:h-6 text-brutal-black" />
+      </button>
     </div>
   );
 }

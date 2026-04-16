@@ -1,29 +1,46 @@
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap');
 @import "tailwindcss";
 
+:root {
+  --bg-color: #FFFFFF;
+  --text-color: #000000;
+  --accent-color: #00FF00;
+  --gray-color: #F0F0F0;
+  --white-color: #FFFFFF;
+}
+
+.dark {
+  --bg-color: #2A2A2A;
+  --text-color: #888888;
+  --accent-color: #00FF00;
+  --gray-color: #404040;
+  --white-color: #1A1A1A;
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Anton", sans-serif;
-  --color-brutal-bg: #FFFFFF;
-  --color-brutal-black: #000000;
-  --color-brutal-green: #00FF00;
-  --color-brutal-gray: #F0F0F0;
+  --color-brutal-bg: var(--bg-color);
+  --color-brutal-black: var(--text-color);
+  --color-brutal-green: var(--accent-color);
+  --color-brutal-gray: var(--gray-color);
+  --color-brutal-white: var(--white-color);
   --breakpoint-2xl: 2000px;
 }
 
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
     width: 12px;
-    border-left: 2px solid black;
+    border-left: 2px solid var(--color-brutal-black);
   }
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: white;
+    background: var(--color-brutal-white);
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: black;
-    border: 2px solid white;
+    background-color: var(--color-brutal-black);
+    border: 2px solid var(--color-brutal-white);
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #333;
+    background-color: var(--color-brutal-gray);
   }
 }
