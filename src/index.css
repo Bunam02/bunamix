@@ -54,4 +54,17 @@
     0% { transform: translateX(100%); }
     100% { transform: translateX(-100%); }
   }
+
+  .fullscreen-clean:fullscreen {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: black !important;
+    border-radius: 0 !important;
+  }
+  .fullscreen-clean:-webkit-full-screen {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: black !important;
+    border-radius: 0 !important;
+  }
 }
