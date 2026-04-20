@@ -20,6 +20,12 @@ export interface PlaylistInfo {
 export async function fetchPlaylistInfo(playlistId: string): Promise<PlaylistInfo> {
   const url = `/api/youtube/playlists?id=${playlistId}&key=${API_KEY}`;
   const response = await fetch(url);
+  
+  const contentType = response.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    throw new Error('API server is temporarily unavailable or returned an invalid response. Please try again.');
+  }
+
   const data = await response.json();
 
   if (data.error) {
@@ -50,6 +56,12 @@ export async function fetchPlaylistItems(playlistId: string): Promise<PlaylistIt
     do {
       const url = `/api/youtube/playlistItems?playlistId=${playlistId}&key=${API_KEY}${pageToken ? '&pageToken=' + pageToken : ''}`;
       const response = await fetch(url);
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error('API server is temporarily unavailable or returned an invalid response. Please try again.');
+      }
+
       const data = await response.json();
 
       if (data.error) {

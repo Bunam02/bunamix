@@ -7,6 +7,13 @@
   --accent-color: #00FF00;
   --gray-color: #F0F0F0;
   --white-color: #FFFFFF;
+  --slider-fill: #89d07e;
+  --slider-bg: #e5e7eb;
+  --slider-thumb-bg: #000000;
+  --slider-thumb-border: #000000;
+  --slider-track-border: #000000;
+  --badge-bg: #000000;
+  --badge-text: #FFFFFF;
 }
 
 .dark {
@@ -15,6 +22,12 @@
   --accent-color: #00FF00;
   --gray-color: #404040;
   --white-color: #1A1A1A;
+  --slider-bg: #404040;
+  --slider-thumb-bg: #ffffff;
+  --slider-thumb-border: #ffffff;
+  --slider-track-border: #888888;
+  --badge-bg: #ffffff;
+  --badge-text: #000000;
 }
 
 @theme {
@@ -68,11 +81,34 @@
     border-radius: 0 !important;
   }
 
+  .theme-slider {
+    border-color: var(--slider-track-border) !important;
+  }
+  .theme-slider::-webkit-slider-thumb {
+    background-color: var(--slider-thumb-bg) !important;
+    border-color: var(--slider-thumb-border) !important;
+  }
+  .theme-slider:active::-webkit-slider-thumb {
+    background-color: var(--slider-thumb-bg) !important;
+  }
+
+  .theme-badge {
+    background-color: var(--badge-bg) !important;
+    color: var(--badge-text) !important;
+  }
+
   /* UI Modes Overrides */
   /* --- MODERN MINIMALIST WOOD (SCANDI/MUJI) MODE --- */
   .ui-wood {
     --bg-color: #f7f5f0; 
     --text-color: #4a4238;
+    --slider-fill: #7b8c73;
+    --slider-bg: #e8e2d5;
+    --slider-thumb-bg: #4a4238;
+    --slider-thumb-border: #4a4238;
+    --slider-track-border: #e8e2d5;
+    --badge-bg: rgba(138, 125, 110, 0.15);
+    --badge-text: #4a4238;
     background-color: var(--bg-color) !important;
     background-image: none !important;
     color: var(--text-color) !important;
@@ -129,8 +165,8 @@
   .ui-wood .max-w-7xl { gap: 1.5rem !important; }
   .ui-wood .max-w-7xl > div { animation: none !important; }
 
-  /* Soft modern buttons (excluding explicit setting toggles) */
-  .ui-wood button:not(.bg-\[\#4cc2ff\]):not(.bg-white\/10) {
+  /* Soft modern buttons (excluding explicit setting toggles and radio mode buttons) */
+  .ui-wood button:not(.bg-\[\#4cc2ff\]):not(.bg-white\/10):not(.radio-btn) {
     border: 1px solid #e1d8c8 !important;
     border-radius: 12px !important;
     background-color: #faf8f5 !important;
@@ -149,7 +185,7 @@
     color: #f7f5f0 !important;
   }
   
-  .ui-wood button:not(.bg-brutal-green):not(.bg-brutal-black):not(.bg-\[\#4cc2ff\]):not(.bg-white\/10):hover {
+  .ui-wood button:not(.bg-brutal-green):not(.bg-brutal-black):not(.bg-\[\#4cc2ff\]):not(.bg-white\/10):not(.radio-btn):hover {
     background-color: #f0eadd !important;
     box-shadow: 0 4px 12px rgba(138, 125, 110, 0.1) !important;
     transform: translateY(-2px) !important;
@@ -241,6 +277,22 @@
   /* --- ACROBATIC MODE --- */
   .ui-acrobatic {
     --bg-color: #f0f4ff;
+    --slider-fill: #fa709a;
+    --slider-bg: rgba(255,255,255,0.4);
+    --slider-thumb-bg: #ffffff;
+    --slider-thumb-border: #fa709a;
+    --slider-track-border: transparent;
+    --badge-bg: rgba(250, 112, 154, 0.15);
+    --badge-text: #fa709a;
+  }
+  .dark.ui-acrobatic {
+    --slider-fill: #84fab0;
+    --slider-bg: rgba(0,0,0,0.4);
+    --slider-thumb-bg: #222222;
+    --slider-thumb-border: #84fab0;
+    --slider-track-border: transparent;
+    --badge-bg: rgba(132, 250, 176, 0.15);
+    --badge-text: #84fab0;
   }
   .ui-acrobatic .bg-brutal-bg { 
     background-color: #f6f8fd !important;

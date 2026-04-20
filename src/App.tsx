@@ -44,7 +44,7 @@ const QueueComponent = ({
       <div className="flex items-center gap-3">
         <span>Up Next</span>
       </div>
-      <span className="bg-brutal-black text-brutal-white px-2 py-0.5 2xl:px-3 2xl:py-1">{currentIndex + 1} / {queue.length}</span>
+      <span className="theme-badge px-3 py-1 2xl:px-4 2xl:py-1.5 rounded-full text-xs font-bold">{currentIndex + 1} / {queue.length}</span>
     </div>
     <div className="flex flex-col gap-3 2xl:gap-4 overflow-y-auto px-6 -mx-6 py-6 -my-4 custom-scrollbar flex-1">
       {queue.map((item, index) => {
@@ -647,7 +647,7 @@ export default function App() {
                     </button>
                   )}
                 </div>
-                <span className="bg-brutal-black text-brutal-white px-2 py-0.5 2xl:px-3 2xl:py-1">{playlists.length}</span>
+                <span className="theme-badge px-3 py-1 2xl:px-4 2xl:py-1.5 rounded-full text-xs font-bold">{playlists.length}</span>
               </div>
               <div className="space-y-3 2xl:space-y-4 overflow-y-auto px-6 -mx-6 py-6 -my-4 custom-scrollbar flex-1 min-h-0">
                 {playlists.length === 0 ? (
@@ -857,9 +857,9 @@ export default function App() {
                         }
                       }}
                       style={{
-                        background: `linear-gradient(to right, #89d07e ${(currentTime / (duration || 100)) * 100}%, #e5e7eb ${(currentTime / (duration || 100)) * 100}%)`
+                        background: `linear-gradient(to right, var(--slider-fill, #89d07e) ${(currentTime / (duration || 100)) * 100}%, var(--slider-bg, #e5e7eb) ${(currentTime / (duration || 100)) * 100}%)`
                       }}
-                      className="flex-1 h-4 2xl:h-6 border-2 2xl:border-4 border-brutal-black appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 2xl:[&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 2xl:[&::-webkit-slider-thumb]:h-8 [&::-webkit-slider-thumb]:bg-brutal-black [&::-webkit-slider-thumb]:border-2 2xl:[&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:border-brutal-black active:[&::-webkit-slider-thumb]:bg-brutal-black"
+                      className="theme-slider flex-1 h-4 2xl:h-6 border-2 2xl:border-4 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 2xl:[&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 2xl:[&::-webkit-slider-thumb]:h-8 [&::-webkit-slider-thumb]:border-2 2xl:[&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:rounded-full"
                     />
                     <span className="text-sm 2xl:text-lg font-bold font-mono w-12 2xl:w-16 shrink-0">{formatTime(duration)}</span>
                   </div>
@@ -1033,7 +1033,7 @@ export default function App() {
           <div className="relative z-10 w-full max-w-[360px] md:max-w-[420px] lg:max-w-[460px] h-full flex flex-col px-6 py-6 md:py-8 lg:py-10 justify-center">
             {/* Top Bar */}
             <div className="flex justify-center items-center w-full text-white/90 mb-6 md:mb-8 lg:mb-10">
-              <button onClick={() => setIsRadioMode(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <button onClick={() => setIsRadioMode(false)} className="radio-btn p-2 hover:bg-white/10 rounded-full transition-colors">
                 <X className="w-8 h-8" />
               </button>
             </div>
@@ -1103,7 +1103,7 @@ export default function App() {
             {/* Controls */}
             <div className="w-full flex justify-center items-center px-2 md:px-6 mb-6 md:mb-10">
               <div className="flex items-center gap-6 md:gap-8 lg:gap-10">
-                <button onClick={playPrevious} className="text-white transition-colors active:scale-95">
+                <button onClick={playPrevious} className="radio-btn text-white transition-colors active:scale-95">
                   <SkipBack className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 fill-current" />
                 </button>
                 <button 
@@ -1111,11 +1111,11 @@ export default function App() {
                     if (isPlaying) playerRef.current?.pauseVideo();
                     else playerRef.current?.playVideo();
                   }} 
-                  className="text-white transition-transform active:scale-95"
+                  className="radio-btn text-white transition-transform active:scale-95"
                 >
                   {isPlaying ? <Pause className="w-10 h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 fill-current" /> : <Play className="w-10 h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 fill-current ml-1" />}
                 </button>
-                <button onClick={playNext} className="text-white transition-colors active:scale-95">
+                <button onClick={playNext} className="radio-btn text-white transition-colors active:scale-95">
                   <SkipForward className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 fill-current" />
                 </button>
               </div>
