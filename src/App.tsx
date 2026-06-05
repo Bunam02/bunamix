@@ -337,8 +337,15 @@ export default function App() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
-  const [volume, setVolume] = useState(100);
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem('playerVolume');
+    return saved !== null ? Number(saved) : 100;
+  });
   const [showVolumeIndicator, setShowVolumeIndicator] = useState(false);
+  
+  useEffect(() => {
+    localStorage.setItem('playerVolume', volume.toString());
+  }, [volume]);
   const [isOverlayEnabled, setIsOverlayEnabled] = useState(() => {
     const saved = localStorage.getItem('isOverlayEnabled');
     return saved !== null ? JSON.parse(saved) : true;
@@ -689,8 +696,7 @@ export default function App() {
   const onPlayerReady: YouTubeProps['onReady'] = (event) => {
     playerRef.current = event.target;
     setIsPlayerReady(true);
-    const currentVol = event.target.getVolume();
-    setVolume(currentVol);
+    event.target.setVolume(volume);
     if (isPlayingRef.current) {
       event.target.playVideo();
     }
