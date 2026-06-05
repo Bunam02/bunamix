@@ -769,24 +769,28 @@ export default function App() {
         <WoodDecorations isPlayer={queue.length > 0} />
       )}
       <div className={cn(
-        "flex-1 w-full mx-auto p-4 md:p-8 flex flex-col gap-8 transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] relative z-10",
+        "flex-1 w-full mx-auto p-4 md:p-8 flex flex-col transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] relative z-10",
         queue.length > 0 
           ? (isSidebarOpen 
-              ? "max-w-[1400px] 2xl:max-w-[2000px] lg:grid lg:grid-cols-[400px_1fr] 2xl:grid-cols-[500px_1fr] lg:items-center min-h-[calc(100vh-4rem)]" 
-              : "max-w-[1000px] 2xl:max-w-[1400px] lg:grid lg:grid-cols-[0px_1fr] lg:items-center min-h-[calc(100vh-4rem)]") 
-          : "max-w-[600px] 2xl:max-w-[800px] justify-center"
+              ? "gap-8 max-w-[1400px] 2xl:max-w-[2000px] lg:grid lg:grid-cols-[400px_1fr] 2xl:grid-cols-[500px_1fr] lg:items-center min-h-[calc(100vh-4rem)]" 
+              : "gap-8 lg:gap-0 max-w-[1000px] 2xl:max-w-[1400px] lg:grid lg:grid-cols-[0px_1fr] lg:items-center min-h-[calc(100vh-4rem)]") 
+          : "gap-8 max-w-[600px] 2xl:max-w-[800px] justify-center"
       )}>
         
         {/* Sidebar */}
         <div className={cn(
-          "flex-col w-full relative transition-[opacity,visibility] duration-[300ms] ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden",
+          "flex-col w-full relative transition-[opacity,visibility] duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden",
           queue.length > 0 ? "lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]" : "gap-6 2xl:gap-10",
-          !queue.length ? "flex" : isSidebarOpen ? "flex opacity-100" : "hidden lg:flex opacity-0 invisible"
+          !queue.length ? "flex" : isSidebarOpen ? "flex opacity-100 visible" : "hidden lg:flex opacity-0 invisible"
         )}>
           <div className={cn(
-            "flex flex-col w-full h-full",
-            queue.length > 0 ? "gap-4 lg:w-[400px] 2xl:w-[500px]" : "gap-6 2xl:gap-10"
+            "flex flex-col w-full h-full lg:relative",
+            queue.length > 0 ? "gap-4 lg:w-[400px] 2xl:w-[500px] border-b-2 lg:border-b-0 border-brutal-black/10 pb-8 lg:pb-0 mb-4 lg:mb-0" : "gap-6 2xl:gap-10 border-transparent border-0 pr-0"
           )}>
+            {/* Divider Line */}
+            {queue.length > 0 && isSidebarOpen && (
+              <div className="hidden lg:block absolute top-0 -right-4 bottom-0 w-[2px] bg-brutal-black/10 transition-opacity duration-300" />
+            )}
             {/* Toggle Sidebar Button (When Open) */}
             {queue.length > 0 && isSidebarOpen && (
             <div className="fixed top-4 left-4 z-50">
@@ -1020,10 +1024,7 @@ export default function App() {
         {/* Main View */}
         {queue.length > 0 && (
           <div className={cn(
-            "flex flex-col gap-6 h-full overflow-hidden pt-8 lg:pt-0 transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] relative justify-center items-center w-full min-w-0",
-            isSidebarOpen 
-              ? "border-t-2 lg:border-t-0 lg:border-l-2 border-brutal-black/10 lg:pl-8 lg:ml-8" 
-              : "border-t-0 lg:border-t-0 lg:border-l-2 border-transparent lg:pl-0 lg:ml-0"
+            "flex flex-col gap-6 h-full overflow-hidden pt-8 lg:pt-0 transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] relative justify-center items-center w-full min-w-0"
           )}>
             
             {/* Toggle Sidebar Button (When Closed or Mobile) */}
