@@ -771,7 +771,7 @@ export default function App() {
       <div className={cn(
         "flex-1 w-full mx-auto p-4 md:p-8 flex flex-col gap-8 transition-all duration-500 relative z-10",
         queue.length > 0 
-          ? (isSidebarOpen ? "max-w-[1400px] 2xl:max-w-[2000px] lg:grid lg:grid-cols-[400px_1fr] 2xl:grid-cols-[500px_1fr]" : "max-w-[1000px] 2xl:max-w-[1400px] flex flex-col pl-4") 
+          ? (isSidebarOpen ? "max-w-[1400px] 2xl:max-w-[2000px] lg:grid lg:grid-cols-[400px_1fr] 2xl:grid-cols-[500px_1fr] lg:items-center min-h-[calc(100vh-4rem)]" : "max-w-[1000px] 2xl:max-w-[1400px] flex flex-col pl-4 justify-center flex-1") 
           : "max-w-[600px] 2xl:max-w-[800px] justify-center"
       )}>
         
@@ -1013,13 +1013,13 @@ export default function App() {
         {/* Main View */}
         {queue.length > 0 && (
           <div className={cn(
-            "flex flex-col gap-6 h-full overflow-hidden border-brutal-black pt-8 lg:pt-0 transition-all duration-500 relative",
-            isSidebarOpen ? "border-t-4 lg:border-t-0 lg:border-l-4 lg:pl-8" : ""
+            "flex flex-col gap-6 h-full overflow-hidden pt-8 lg:pt-0 transition-all duration-500 relative justify-center items-center w-full",
+            isSidebarOpen ? "border-t-2 border-brutal-black/10 lg:border-t-0 lg:border-l-2 lg:pl-8" : ""
           )}>
             
             {/* Toggle Sidebar Button (When Closed or Mobile) */}
             <div className={cn(
-              "z-50",
+              "z-50 w-full",
               isSidebarOpen 
                 ? "absolute -top-12 right-0 lg:hidden" 
                 : "fixed top-4 left-4"
@@ -1033,7 +1033,7 @@ export default function App() {
             </div>
 
             {/* Player Area Wrapper */}
-            <div className="flex flex-col gap-4 2xl:gap-6 w-full relative">
+            <div className="flex flex-col gap-4 2xl:gap-6 w-full max-w-[1000px] 2xl:max-w-[1200px] relative justify-center mx-auto">
               {/* Player Mockup */}
               <div ref={videoContainerRef} className={cn(
                 "w-full bg-brutal-black border-4 border-brutal-black flex items-center justify-center relative overflow-hidden shadow-[8px_8px_0_0_var(--color-brutal-black)] fullscreen-clean",
