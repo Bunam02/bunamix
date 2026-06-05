@@ -15,8 +15,10 @@ export interface PlaylistInfo {
   items?: PlaylistItem[];
 }
 
+const YOUTUBE_API_KEY = "AIzaSyC4usA02zFbvFOKIbTIwXiVKTvT_QGRqro";
+
 export async function fetchPlaylistInfo(playlistId: string): Promise<PlaylistInfo> {
-  const url = `/api/media/playlists?id=${encodeURIComponent(playlistId)}`;
+  const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&id=${encodeURIComponent(playlistId)}&key=${YOUTUBE_API_KEY}`;
   let response;
   try {
     response = await fetch(url);
@@ -57,7 +59,7 @@ export async function fetchPlaylistItems(playlistId: string): Promise<PlaylistIt
 
   try {
     do {
-      const url = `/api/media/playlistItems?playlistId=${encodeURIComponent(playlistId)}${pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : ''}`;
+      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${encodeURIComponent(playlistId)}&key=${YOUTUBE_API_KEY}${pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : ''}`;
       let response;
       try {
         response = await fetch(url);
