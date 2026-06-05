@@ -761,7 +761,7 @@ export default function App() {
   const currentVideo = queue[currentIndex];
 
   return (
-    <div className="min-h-screen bg-brutal-bg text-brutal-black font-sans flex flex-col relative z-0 overflow-hidden">
+    <div className="min-h-screen bg-brutal-bg text-brutal-black font-sans flex flex-col relative z-0 overflow-x-hidden">
       {uiMode === 'retro' && !isRadioMode && (
         <RetroDecorations isPlayer={queue.length > 0} />
       )}
@@ -779,8 +779,8 @@ export default function App() {
         
         {/* Sidebar */}
         <div className={cn(
-          "flex-col w-full relative transition-[opacity,visibility] duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden",
-          queue.length > 0 ? "lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]" : "gap-6 2xl:gap-10",
+          "flex-col w-full relative transition-[opacity,visibility] duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+          queue.length > 0 ? "lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)] overflow-hidden" : "gap-6 2xl:gap-10",
           !queue.length ? "flex" : isSidebarOpen ? "flex opacity-100 visible" : "hidden lg:flex opacity-0 invisible"
         )}>
           <div className={cn(
