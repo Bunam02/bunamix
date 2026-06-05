@@ -769,19 +769,19 @@ export default function App() {
         <WoodDecorations isPlayer={queue.length > 0} />
       )}
       <div className={cn(
-        "flex-1 w-full mx-auto p-4 md:p-8 flex flex-col transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] relative z-10",
+        "flex-1 w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] relative z-10",
         queue.length > 0 
           ? (isSidebarOpen 
-              ? "gap-8 max-w-[1400px] 2xl:max-w-[2000px] lg:grid lg:grid-cols-[400px_1fr] 2xl:grid-cols-[500px_1fr] lg:items-center min-h-[calc(100vh-4rem)]" 
-              : "gap-8 lg:gap-0 max-w-[1000px] 2xl:max-w-[1400px] lg:grid lg:grid-cols-[0px_1fr] lg:items-center min-h-[calc(100vh-4rem)]") 
+              ? "gap-8 max-w-[1400px] 2xl:max-w-[2000px] lg:items-center min-h-[calc(100vh-4rem)]" 
+              : "gap-8 lg:gap-0 max-w-[1400px] 2xl:max-w-[2000px] lg:items-center min-h-[calc(100vh-4rem)]") 
           : "gap-8 max-w-[600px] 2xl:max-w-[800px] justify-center"
       )}>
         
         {/* Sidebar */}
         <div className={cn(
-          "flex-col w-full relative transition-[opacity,visibility] duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden",
-          queue.length > 0 ? "lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]" : "gap-6 2xl:gap-10",
-          !queue.length ? "flex" : isSidebarOpen ? "flex opacity-100 visible" : "hidden lg:flex opacity-0 invisible"
+          "flex-col relative transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden shrink-0",
+          queue.length > 0 ? "lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]" : "w-full gap-6 2xl:gap-10",
+          !queue.length ? "flex" : isSidebarOpen ? "flex opacity-100 lg:w-[400px] 2xl:w-[500px]" : "hidden lg:flex opacity-0 lg:w-[0px]"
         )}>
           <div className={cn(
             "flex flex-col w-full h-full lg:relative",
@@ -1024,7 +1024,7 @@ export default function App() {
         {/* Main View */}
         {queue.length > 0 && (
           <div className={cn(
-            "flex flex-col gap-6 h-full overflow-hidden pt-8 lg:pt-0 transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] relative justify-center items-center w-full min-w-0"
+            "flex-1 flex flex-col gap-6 h-full overflow-hidden pt-8 lg:pt-0 transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] relative justify-center items-center w-full min-w-0"
           )}>
             
             {/* Toggle Sidebar Button (When Closed or Mobile) */}
