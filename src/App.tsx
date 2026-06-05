@@ -310,10 +310,26 @@ const RetroDecorations = ({ isPlayer = false }: { isPlayer?: boolean }) => {
   );
 };
 
+const safeGetItem = (key: string) => {
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    return null;
+  }
+};
+
+const safeSetItem = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    // Ignore error
+  }
+};
+
 export default function App() {
   const [inputValue, setInputValue] = useState('');
   const [playlists, setPlaylists] = useState<PlaylistInfo[]>(() => {
-    const saved = localStorage.getItem('savedPlaylists');
+    const saved = safeGetItem('savedPlaylists');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -338,16 +354,16 @@ export default function App() {
   const [duration, setDuration] = useState(0);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [volume, setVolume] = useState(() => {
-    const saved = localStorage.getItem('playerVolume');
+    const saved = safeGetItem('playerVolume');
     return saved !== null ? Number(saved) : 100;
   });
   const [showVolumeIndicator, setShowVolumeIndicator] = useState(false);
   
   useEffect(() => {
-    localStorage.setItem('playerVolume', volume.toString());
+    safeSetItem('playerVolume', volume.toString());
   }, [volume]);
   const [isOverlayEnabled, setIsOverlayEnabled] = useState(() => {
-    const saved = localStorage.getItem('isOverlayEnabled');
+    const saved = safeGetItem('isOverlayEnabled');
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -356,11 +372,11 @@ export default function App() {
   const [isDarkModeShaking, setIsDarkModeShaking] = useState(false);
   const [showThemeWarning, setShowThemeWarning] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('theme');
+    const saved = safeGetItem('theme');
     return (saved as 'light' | 'dark') || 'light';
   });
   const [uiMode, setUiMode] = useState<'retro' | 'wood' | 'acrobatic'>(() => {
-    const saved = localStorage.getItem('uiMode');
+    const saved = safeGetItem('uiMode');
     return (saved as 'retro' | 'wood' | 'acrobatic') || 'retro';
   });
 
@@ -376,7 +392,7 @@ export default function App() {
   
   // Save isOverlayEnabled to localStorage
   useEffect(() => {
-    localStorage.setItem('isOverlayEnabled', JSON.stringify(isOverlayEnabled));
+    safeSetItem('isOverlayEnabled', JSON.stringify(isOverlayEnabled));
   }, [isOverlayEnabled]);
 
   useEffect(() => {
@@ -412,7 +428,7 @@ export default function App() {
   }, [queue.length, initialVideoId, isOverlayEnabled]);
 
   useEffect(() => {
-    localStorage.setItem('theme', theme);
+    safeSetItem('theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
@@ -421,7 +437,7 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
-    localStorage.setItem('uiMode', uiMode);
+    safeSetItem('uiMode', uiMode);
     document.documentElement.classList.remove('ui-retro', 'ui-cyberpunk', 'ui-emotional', 'ui-modern', 'ui-futuristic', 'ui-neon', 'ui-cinema', 'ui-wood', 'ui-acrobatic', 'ui-brutal', 'ui-minimal', 'ui-glass');
     document.documentElement.classList.add(`ui-${uiMode}`);
   }, [uiMode]);
@@ -447,7 +463,7 @@ export default function App() {
   }, [isPlaying]);
 
   useEffect(() => {
-    localStorage.setItem('savedPlaylists', JSON.stringify(playlists));
+    safeSetItem('savedPlaylists', JSON.stringify(playlists));
   }, [playlists]);
 
   useEffect(() => {
@@ -746,10 +762,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-brutal-bg text-brutal-black font-sans flex flex-col relative z-0 overflow-hidden">
-      {uiMode === 'retro' && (
+      {uiMode === 'retro' && !isRadioMode && (
         <RetroDecorations isPlayer={queue.length > 0} />
       )}
-      {uiMode === 'wood' && (
+      {uiMode === 'wood' && !isRadioMode && (
         <WoodDecorations isPlayer={queue.length > 0} />
       )}
       <div className={cn(

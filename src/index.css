@@ -260,7 +260,12 @@
   }
   
   .ui-retro .radio-btn {
-    background-color: #fce4ec !important; /* Pastel pink */
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+  .ui-retro .radio-btn:hover {
+    background-color: transparent !important;
+    box-shadow: none !important;
   }
   
   .ui-retro .custom-scrollbar::-webkit-scrollbar { border-left: none !important; width: 10px; }
