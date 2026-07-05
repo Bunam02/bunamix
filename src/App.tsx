@@ -13,7 +13,8 @@ import {
 } from 'lucide-react';
 import { 
   fetchPlaylistInfo, fetchPlaylistItems, extractPlaylistId, 
-  shuffleArray, PlaylistItem, PlaylistInfo 
+  shuffleArray, PlaylistItem, PlaylistInfo,
+  fetchVideoInfo, extractVideoId
 } from './lib/youtube';
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -34,115 +35,198 @@ const QueueComponent = ({
   queue, 
   currentIndex, 
   playSpecificVideo,
-  uiMode
+  restoreFromHistory,
+  uiMode,
+  isSongRequestMode
 }: { 
   queue: PlaylistItem[], 
   currentIndex: number, 
   playSpecificVideo: (index: number) => void,
-  uiMode: string
-}) => (
-  <div className="flex flex-col gap-2 flex-1 min-h-0 pt-4 -mt-[17px] overflow-hidden">
-    <div className={cn("text-sm 2xl:text-lg uppercase font-bold tracking-widest pb-1 2xl:pb-2 flex justify-between items-center shrink-0", uiMode === 'retro' ? "text-[var(--retro-accent-text)] border-b-0 px-2" : "border-b-2 2xl:border-b-4 border-brutal-black")}>
-      <div className="flex items-center gap-3">
+  restoreFromHistory?: (index: number) => void,
+  uiMode: string,
+  isSongRequestMode?: boolean
+}) => {
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [floatingTexts, setFloatingTexts] = useState<{ id: number, x: number, y: number }[]>([]);
+  const upNextQueue = queue.slice(currentIndex);
+  const historyQueue = queue.slice(0, currentIndex);
+
+  const handleRestoreClick = (e: React.MouseEvent, index: number) => {
+    const newId = Date.now();
+    setFloatingTexts(prev => [...prev, { id: newId, x: e.clientX, y: e.clientY }]);
+    setTimeout(() => {
+      setFloatingTexts(prev => prev.filter(t => t.id !== newId));
+    }, 800);
+    restoreFromHistory?.(index);
+  };
+
+  return (
+    <div className="flex flex-col gap-2 flex-1 min-h-0 pt-4 -mt-[17px] overflow-hidden relative">
+      {floatingTexts.map(t => (
+        <div
+          key={t.id}
+          className="fixed pointer-events-none z-[100] text-base md:text-lg font-black text-black drop-shadow-lg animate-float-up tracking-widest whitespace-nowrap"
+          style={{
+            left: t.x - 20,
+            top: t.y - 40,
+            WebkitTextStroke: '1.5px white',
+            paintOrder: 'stroke fill'
+          }}
+        >
+          부활이닷! ヾ(•ω•`)o
+        </div>
+      ))}
+      <div className={cn("text-sm 2xl:text-lg uppercase font-bold tracking-widest pb-1 2xl:pb-2 flex justify-between items-center shrink-0", uiMode === 'retro' ? "text-[var(--retro-accent-text)] border-b-0 px-2" : "border-b-2 2xl:border-b-4 border-brutal-black")}>
+        <div className="flex items-center gap-3">
+          {uiMode === 'retro' ? (
+            <div className="paper-logo text-[1.4rem] 2xl:text-[1.8rem] ml-1 mb-2 mt-2" style={{ textTransform: 'none' }}>
+              <span style={{ color: '#fcaf6c', transform: 'rotate(-2deg)' }}>U</span>
+              <span style={{ color: '#f38883', transform: 'translateY(-2px) rotate(2deg)' }}>P</span>
+              <span style={{ display: 'inline-block', width: '0.4em' }}></span>
+              <span style={{ color: '#b7d698', transform: 'translateY(1px) rotate(-1deg)' }}>N</span>
+              <span style={{ color: '#7bb1db', transform: 'rotate(2deg)' }}>e</span>
+              <span style={{ color: '#aa95c7', transform: 'translateY(-1px) rotate(-2deg)' }}>x</span>
+              <span style={{ color: '#f5cb74', transform: 'rotate(1deg)' }}>t</span>
+            </div>
+          ) : (
+            <span>Up Next</span>
+          )}
+        </div>
         {uiMode === 'retro' ? (
-          <div className="paper-logo text-[1.4rem] 2xl:text-[1.8rem] ml-1 mb-2 mt-2" style={{ textTransform: 'none' }}>
-            <span style={{ color: '#fcaf6c', transform: 'rotate(-2deg)' }}>U</span>
-            <span style={{ color: '#f38883', transform: 'translateY(-2px) rotate(2deg)' }}>P</span>
-            <span style={{ display: 'inline-block', width: '0.4em' }}></span>
-            <span style={{ color: '#b7d698', transform: 'translateY(1px) rotate(-1deg)' }}>N</span>
-            <span style={{ color: '#7bb1db', transform: 'rotate(2deg)' }}>e</span>
-            <span style={{ color: '#aa95c7', transform: 'translateY(-1px) rotate(-2deg)' }}>x</span>
-            <span style={{ color: '#f5cb74', transform: 'rotate(1deg)' }}>t</span>
+          <div className="paper-logo text-[1.2rem] 2xl:text-[1.5rem]" style={{ textTransform: 'none' }}>
+            <span style={{ color: '#7bb1db', transform: 'rotate(-2deg)' }}>{currentIndex + 1}</span>
+            <span style={{ color: '#f5cb74', marginInline: '0.2em' }}>/</span>
+            <span style={{ color: '#eb9dc5', transform: 'rotate(2deg)' }}>{queue.length}</span>
           </div>
         ) : (
-          <span>Up Next</span>
+          <span className="theme-badge px-3 py-1 2xl:px-4 2xl:py-1.5 rounded-full text-xs font-bold">{currentIndex + 1} / {queue.length}</span>
         )}
       </div>
-      {uiMode === 'retro' ? (
-        <div className="paper-logo text-[1.2rem] 2xl:text-[1.5rem]" style={{ textTransform: 'none' }}>
-          <span style={{ color: '#7bb1db', transform: 'rotate(-2deg)' }}>{currentIndex + 1}</span>
-          <span style={{ color: '#f5cb74', marginInline: '0.2em' }}>/</span>
-          <span style={{ color: '#eb9dc5', transform: 'rotate(2deg)' }}>{queue.length}</span>
-        </div>
-      ) : (
-        <span className="theme-badge px-3 py-1 2xl:px-4 2xl:py-1.5 rounded-full text-xs font-bold">{currentIndex + 1} / {queue.length}</span>
-      )}
-    </div>
-    <div className={cn("flex flex-col overflow-y-auto px-6 -mx-6 py-6 -my-4 custom-scrollbar flex-1", uiMode === 'retro' ? "gap-4 2xl:gap-5" : "gap-3 2xl:gap-4")}>
-      {queue.map((item, index) => {
-        if (index < currentIndex) return null;
-
-        const isPlaying = index === currentIndex;
-        
-        return (
-          <div 
-            key={`${item.id}-${index}`}
-            onClick={() => playSpecificVideo(index)}
-            className={cn(
-              uiMode === 'retro'
-                ? "retro-queue-item flex items-center gap-3 2xl:gap-4 p-3 2xl:p-4 px-4 2xl:px-5 cursor-pointer shrink-0 mx-2 mb-2 relative"
-                : "flex items-center gap-4 2xl:gap-6 p-2 2xl:p-4 border-2 2xl:border-4 cursor-pointer transition-all shrink-0 mx-2 mb-2",
-              uiMode !== 'retro' && isPlaying 
-                ? "border-brutal-black bg-brutal-green shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)]" 
-                : uiMode !== 'retro' ? "border-brutal-black bg-brutal-white hover:bg-brutal-gray shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)]" : ""
-            )}
-          >
-            {uiMode !== 'retro' && (
-              <div className="w-[100px] h-[56px] 2xl:w-[160px] 2xl:h-[90px] bg-brutal-black border-2 2xl:border-4 border-brutal-black overflow-hidden shrink-0 relative">
-                <img 
-                  src={item.thumbnail} 
-                  alt={item.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-            {uiMode === 'retro' && (
-              <div className="w-10 h-10 2xl:w-14 2xl:h-14 rounded-full overflow-hidden shrink-0 shadow-inner opacity-80" style={{ backgroundColor: 'var(--retro-secondary)' }}>
-                <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0 flex flex-col justify-center">
-              <div className={cn("text-sm 2xl:text-lg font-extrabold truncate tracking-tight", uiMode === 'retro' ? "text-[var(--retro-accent-text)]" : "text-sm 2xl:text-xl font-bold uppercase")}>
-                {item.title}
-              </div>
-              <div className={cn("text-xs 2xl:text-sm font-bold truncate", uiMode === 'retro' ? "text-[var(--retro-muted)] mt-0.5 tracking-wide" : "text-xs 2xl:text-base text-brutal-black/60 uppercase")}>
-                {item.channelTitle}
-              </div>
-            </div>
-            <div className={cn(
-              "shrink-0 transition-all duration-300 flex items-center justify-end",
-              uiMode === 'retro' ? "min-w-[50px] 2xl:min-w-[70px] pl-2" : "px-2 2xl:px-4 text-xl 2xl:text-3xl font-display",
-              isPlaying 
-                ? (uiMode === 'retro' ? "" : document.documentElement.classList.contains('ui-wood') ? "text-brutal-green font-medium tracking-wide text-sm" : "text-brutal-black") 
-                : (uiMode === 'retro' ? "text-[var(--retro-accent-text)] font-extrabold text-[1.1rem] 2xl:text-2xl opacity-80" : "text-brutal-black/30 font-display")
-            )} style={uiMode === 'retro' && !isPlaying ? { fontFamily: "'Nunito', sans-serif" } : {}}>
-              {isPlaying && uiMode === 'retro' ? (
-                <div className="relative mt-1" style={{ filter: 'var(--retro-filter-shadow)' }}>
-                  <div className="relative inline-flex flex-col items-center justify-center bg-[var(--badge-bg)] rounded-full px-3 py-1.5 2xl:px-4 2xl:py-2 min-w-[65px] 2xl:min-w-[75px]">
-                    {/* Cloud Bumps */}
-                    <div className="absolute -top-2.5 left-[50%] -translate-x-[50%] w-6 h-6 2xl:w-7 2xl:h-7 bg-[var(--badge-bg)] rounded-full"></div>
-                    <div className="absolute -top-1 left-0.5 w-4 h-4 2xl:w-5 2xl:h-5 bg-[var(--badge-bg)] rounded-full"></div>
-                    <div className="absolute -top-1.5 right-0.5 w-4 h-4 2xl:w-5 2xl:h-5 bg-[var(--badge-bg)] rounded-full"></div>
-                    {/* Heart */}
-                    <div className="absolute -top-3 2xl:-top-4 left-1/2 -translate-x-1/2 z-10">
-                      <Heart className="w-3 h-3 2xl:w-4 2xl:h-4 text-[#e06666] fill-current drop-shadow-sm" />
+      <div className={cn("flex flex-col overflow-y-auto px-6 -mx-6 py-6 -my-4 custom-scrollbar flex-1 relative", uiMode === 'retro' ? "gap-4 2xl:gap-5" : "gap-3 2xl:gap-4")}>
+        {isSongRequestMode && historyQueue.length > 0 && (
+          <div className="mb-2">
+            <div onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+              className={cn(
+                "w-full flex items-center justify-between p-2 2xl:p-3 font-bold uppercase transition-all mb-4",
+                uiMode === 'retro' ? "text-[var(--retro-accent-text)] bg-[var(--retro-paper)] rounded-full px-4 shadow-sm" : "border-2 2xl:border-4 border-brutal-black bg-brutal-white hover:bg-brutal-gray shadow-[2px_2px_0_0_var(--color-brutal-black)]"
+              )}
+            >
+              <span>History ({historyQueue.length})</span>
+              <span className="text-xl leading-none">{isHistoryOpen ? '−' : '+'}</span></div>
+            {isHistoryOpen && (
+              <div className="flex flex-col gap-3 2xl:gap-4 mb-6 opacity-70 max-h-[250px] 2xl:max-h-[420px] overflow-y-auto overflow-x-hidden custom-scrollbar pr-2 -mr-2">
+                {historyQueue.map((item, index) => (
+                  <div 
+                    key={`history-${item.id}-${index}`}
+                    onClick={(e) => handleRestoreClick(e, index)}
+                    className={cn(
+                      uiMode === 'retro'
+                        ? "retro-queue-item flex items-center gap-3 2xl:gap-4 p-3 2xl:p-4 px-4 2xl:px-5 cursor-pointer shrink-0 mx-2 relative opacity-70"
+                        : "flex items-center gap-4 2xl:gap-6 p-2 2xl:p-4 border-2 2xl:border-4 cursor-pointer transition-all shrink-0 mx-2 border-brutal-black bg-brutal-white hover:bg-brutal-gray shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)] opacity-70"
+                    )}
+                  >
+                    {uiMode !== 'retro' && (
+                      <div className="w-[100px] h-[56px] 2xl:w-[160px] 2xl:h-[90px] bg-brutal-black border-2 2xl:border-4 border-brutal-black overflow-hidden shrink-0 relative grayscale">
+                        <img 
+                          src={item.thumbnail} 
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    {uiMode === 'retro' && (
+                      <div className="w-10 h-10 2xl:w-14 2xl:h-14 rounded-full overflow-hidden shrink-0 shadow-inner opacity-60 grayscale" style={{ backgroundColor: 'var(--retro-secondary)' }}>
+                        <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <div className={cn("text-sm 2xl:text-lg font-extrabold truncate tracking-tight line-through", uiMode === 'retro' ? "text-[var(--retro-accent-text)]" : "text-sm 2xl:text-xl font-bold uppercase")}>
+                        {item.title}
+                      </div>
+                      <div className={cn("text-xs 2xl:text-sm font-bold truncate line-through", uiMode === 'retro' ? "text-[var(--retro-muted)] mt-0.5 tracking-wide" : "text-xs 2xl:text-base text-brutal-black/60 uppercase")}>
+                        {item.channelTitle}
+                      </div>
                     </div>
-                    {/* Text */}
-                    <span className="text-[9px] 2xl:text-[11px] font-extrabold text-[var(--badge-text)] tracking-wider relative z-10 pt-[2px]" style={{ fontFamily: "'Nunito', sans-serif" }}>PLAYING</span>
                   </div>
-                </div>
-              ) : isPlaying && uiMode === 'wood' ? (
-                <div className="flex items-center gap-1 font-display text-sm tracking-widest text-[#b93c3c]">
-                  <span className="text-[#b93c3c] text-lg">★</span>PLAYING
-                </div>
-              ) : isPlaying ? "PLAYING" : `#${index + 1}`}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
-        );
-      })}
+        )}
+        {upNextQueue.map((item, originalIndex) => {
+          const index = currentIndex + originalIndex;
+          const isPlaying = index === currentIndex;
+          
+          return (
+            <div 
+              key={`${item.id}-${index}`}
+              onClick={() => playSpecificVideo(index)}
+              className={cn(
+                uiMode === 'retro'
+                  ? "retro-queue-item flex items-center gap-3 2xl:gap-4 p-3 2xl:p-4 px-4 2xl:px-5 cursor-pointer shrink-0 mx-2 mb-2 relative"
+                  : "flex items-center gap-4 2xl:gap-6 p-2 2xl:p-4 border-2 2xl:border-4 cursor-pointer transition-all shrink-0 mx-2 mb-2",
+                uiMode !== 'retro' && isPlaying 
+                  ? "border-brutal-black bg-brutal-green shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)]" 
+                  : uiMode !== 'retro' ? "border-brutal-black bg-brutal-white hover:bg-brutal-gray shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)]" : ""
+              )}
+            >
+              {uiMode !== 'retro' && (
+                <div className="w-[100px] h-[56px] 2xl:w-[160px] 2xl:h-[90px] bg-brutal-black border-2 2xl:border-4 border-brutal-black overflow-hidden shrink-0 relative">
+                  <img 
+                    src={item.thumbnail} 
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              {uiMode === 'retro' && (
+                <div className="w-10 h-10 2xl:w-14 2xl:h-14 rounded-full overflow-hidden shrink-0 shadow-inner opacity-80" style={{ backgroundColor: 'var(--retro-secondary)' }}>
+                  <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className={cn("text-sm 2xl:text-lg font-extrabold truncate tracking-tight", uiMode === 'retro' ? "text-[var(--retro-accent-text)]" : "text-sm 2xl:text-xl font-bold uppercase")}>
+                  {item.title}
+                </div>
+                <div className={cn("text-xs 2xl:text-sm font-bold truncate", uiMode === 'retro' ? "text-[var(--retro-muted)] mt-0.5 tracking-wide" : "text-xs 2xl:text-base text-brutal-black/60 uppercase")}>
+                  {item.channelTitle}
+                </div>
+              </div>
+              <div className={cn(
+                "shrink-0 transition-all duration-300 flex items-center justify-end",
+                uiMode === 'retro' ? "min-w-[50px] 2xl:min-w-[70px] pl-2" : "px-2 2xl:px-4 text-xl 2xl:text-3xl font-display",
+                isPlaying 
+                  ? (uiMode === 'retro' ? "" : document.documentElement.classList.contains('ui-wood') ? "text-brutal-green font-medium tracking-wide text-sm" : "text-brutal-black") 
+                  : (uiMode === 'retro' ? "text-[var(--retro-accent-text)] font-extrabold text-[1.1rem] 2xl:text-2xl opacity-80" : "text-brutal-black/30 font-display")
+              )} style={uiMode === 'retro' && !isPlaying ? { fontFamily: "'Nunito', sans-serif" } : {}}>
+                {isPlaying && uiMode === 'retro' ? (
+                  <div className="relative mt-1" style={{ filter: 'var(--retro-filter-shadow)' }}>
+                    <div className="relative inline-flex flex-col items-center justify-center bg-[var(--badge-bg)] rounded-full px-3 py-1.5 2xl:px-4 2xl:py-2 min-w-[65px] 2xl:min-w-[75px]">
+                      {/* Cloud Bumps */}
+                      <div className="absolute -top-2.5 left-[50%] -translate-x-[50%] w-6 h-6 2xl:w-7 2xl:h-7 bg-[var(--badge-bg)] rounded-full"></div>
+                      <div className="absolute -top-1 left-0.5 w-4 h-4 2xl:w-5 2xl:h-5 bg-[var(--badge-bg)] rounded-full"></div>
+                      <div className="absolute -top-1.5 right-0.5 w-4 h-4 2xl:w-5 2xl:h-5 bg-[var(--badge-bg)] rounded-full"></div>
+                      {/* Heart */}
+                      <div className="absolute -top-3 2xl:-top-4 left-1/2 -translate-x-1/2 z-10">
+                        <Heart className="w-3 h-3 2xl:w-4 2xl:h-4 text-[#e06666] fill-current drop-shadow-sm" />
+                      </div>
+                      {/* Text */}
+                      <span className="text-[9px] 2xl:text-[11px] font-extrabold text-[var(--badge-text)] tracking-wider relative z-10 pt-[2px]" style={{ fontFamily: "'Nunito', sans-serif" }}>PLAYING</span>
+                    </div>
+                  </div>
+                ) : isPlaying && uiMode === 'wood' ? (
+                  <div className="flex items-center gap-1 font-display text-sm tracking-widest text-[#b93c3c]">
+                    <span className="text-[#b93c3c] text-lg">★</span>PLAYING
+                  </div>
+                ) : isPlaying ? "PLAYING" : ""}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const WoodDecorations = ({ isPlayer = false }: { isPlayer?: boolean }) => {
   if (isPlayer) return null;
@@ -328,6 +412,8 @@ const safeSetItem = (key: string, value: string) => {
 
 export default function App() {
   const [inputValue, setInputValue] = useState('');
+  const [songRequestValue, setSongRequestValue] = useState('');
+  const [isSongRequestMode, setIsSongRequestMode] = useState(false);
   const [playlists, setPlaylists] = useState<PlaylistInfo[]>(() => {
     const saved = safeGetItem('savedPlaylists');
     if (saved) {
@@ -349,6 +435,7 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAutoplayEnabled, setIsAutoplayEnabled] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isPlaylistDropdownOpen, setIsPlaylistDropdownOpen] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off');
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -379,6 +466,8 @@ export default function App() {
     const saved = safeGetItem('uiMode');
     return (saved as 'retro' | 'wood' | 'acrobatic') || 'retro';
   });
+
+  const isPlayerActive = queue.length > 0 || isSongRequestMode;
 
   const playerRef = useRef<any>(null);
   const autoplayRef = useRef(isAutoplayEnabled);
@@ -619,6 +708,63 @@ export default function App() {
     }
   };
 
+  
+  const handleAddPlaylistItems = async (playlist) => {
+    setIsPlaylistDropdownOpen(false);
+    setIsLoading(true);
+    try {
+      const items = await fetchPlaylistItems(playlist.id);
+      if (!items || items.length === 0) {
+        setError('Playlist is empty or could not be loaded.');
+        return;
+      }
+      setQueue(prev => {
+        const newQueue = [...prev, ...items];
+        if (prev.length === 0) {
+          setCurrentIndex(0);
+          setInitialVideoId(items[0].videoId);
+        }
+        return newQueue;
+      });
+      if (!isPlaying) {
+        setIsPlaying(true);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to add playlist.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddSongRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    const videoId = extractVideoId(songRequestValue);
+    if (!videoId) {
+      setError('Invalid YouTube Video URL or ID.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const info = await fetchVideoInfo(videoId);
+      setQueue(prev => {
+        const newQueue = [...prev, info];
+        if (prev.length === 0) {
+          setCurrentIndex(0);
+          setInitialVideoId(info.videoId);
+        }
+        return newQueue;
+      });
+      setSongRequestValue('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch video info.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleRemovePlaylist = (id: string) => {
     setPlaylists(prev => prev.filter(p => p.id !== id));
     if (queue.length > 0) {
@@ -677,11 +823,34 @@ export default function App() {
 
   // ⭐️ 추가: 곡 변경과 재생을 동시에 즉각적으로 처리하는 핵심 함수
   const playSpecificVideo = (index: number) => {
-    setCurrentIndex(index);
+    if (index === currentIndex) return;
+
+    if (index > currentIndex) {
+      setQueue(prev => {
+        const newQueue = [...prev];
+        const [clickedItem] = newQueue.splice(index, 1);
+        newQueue.splice(currentIndex + 1, 0, clickedItem);
+        return newQueue;
+      });
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      setCurrentIndex(index);
+    }
+    
     if (playerRef.current && queueRef.current[index]) {
       playerRef.current.loadVideoById(queueRef.current[index].videoId);
       setIsPlaying(true);
     }
+  };
+
+  const restoreFromHistory = (index: number) => {
+    setQueue(prev => {
+      const newQueue = [...prev];
+      const [restoredItem] = newQueue.splice(index, 1);
+      newQueue.push(restoredItem);
+      return newQueue;
+    });
+    setCurrentIndex(prev => prev > index ? prev - 1 : prev);
   };
 
   const playNext = () => {
@@ -763,14 +932,14 @@ export default function App() {
   return (
     <div className="min-h-screen bg-brutal-bg text-brutal-black font-sans flex flex-col relative z-0 overflow-x-hidden">
       {uiMode === 'retro' && !isRadioMode && (
-        <RetroDecorations isPlayer={queue.length > 0} />
+        <RetroDecorations isPlayer={isPlayerActive} />
       )}
       {uiMode === 'wood' && !isRadioMode && (
-        <WoodDecorations isPlayer={queue.length > 0} />
+        <WoodDecorations isPlayer={isPlayerActive} />
       )}
       <div className={cn(
         "flex-1 w-full mx-auto p-4 md:p-8 flex flex-col transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] relative z-10",
-        queue.length > 0 
+        isPlayerActive 
           ? (isSidebarOpen 
               ? "gap-8 max-w-[1400px] 2xl:max-w-[2000px] lg:grid lg:grid-cols-[400px_1fr] 2xl:grid-cols-[500px_1fr] lg:items-center min-h-[calc(100vh-4rem)]" 
               : "gap-8 lg:gap-0 max-w-[1000px] 2xl:max-w-[1400px] lg:grid lg:grid-cols-[0px_1fr] lg:items-center min-h-[calc(100vh-4rem)]") 
@@ -780,26 +949,26 @@ export default function App() {
         {/* Sidebar */}
         <div className={cn(
           "flex-col w-full relative transition-[opacity,visibility] duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
-          queue.length > 0 ? "lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)] overflow-hidden" : "gap-6 2xl:gap-10",
-          !queue.length ? "flex" : isSidebarOpen ? "flex opacity-100 visible" : "hidden lg:flex opacity-0 invisible"
+          isPlayerActive ? "lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)] overflow-hidden" : "gap-6 2xl:gap-10",
+          !isPlayerActive ? "flex" : isSidebarOpen ? "flex opacity-100 visible" : "hidden lg:flex opacity-0 invisible"
         )}>
           <div className={cn(
             "flex flex-col w-full h-full lg:relative",
-            queue.length > 0 ? "gap-4 lg:w-[400px] 2xl:w-[500px] border-b-2 lg:border-b-0 border-brutal-black/10 pb-8 lg:pb-0 mb-4 lg:mb-0" : "gap-6 2xl:gap-10 border-transparent border-0 pr-0"
+            isPlayerActive ? "gap-4 lg:w-[400px] 2xl:w-[500px] border-b-2 lg:border-b-0 border-brutal-black/10 pb-8 lg:pb-0 mb-4 lg:mb-0" : "gap-6 2xl:gap-10 border-transparent border-0 pr-0"
           )}>
             {/* Divider Line */}
-            {queue.length > 0 && isSidebarOpen && (
+            {isPlayerActive && isSidebarOpen && (
               <div className="hidden lg:block absolute top-0 -right-4 bottom-0 w-[2px] bg-brutal-black/10 transition-opacity duration-300" />
             )}
             {/* Toggle Sidebar Button (When Open) */}
-            {queue.length > 0 && isSidebarOpen && (
+            {isPlayerActive && isSidebarOpen && (
             <div className="fixed top-4 left-4 z-50">
-              <button 
+              <div 
                 onClick={() => setIsSidebarOpen(false)}
                 className="p-2 bg-brutal-white border-2 border-brutal-black hover:bg-brutal-green transition-colors shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
               >
                 <PanelLeftClose className="w-5 h-5" />
-              </button>
+              </div>
             </div>
           )}
 
@@ -809,7 +978,7 @@ export default function App() {
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
             className={cn(
               "title-bar flex flex-col items-center justify-center transition-all duration-500",
-              queue.length > 0 ? "gap-2 text-5xl -mt-[10px] -mb-[5px]" 
+              isPlayerActive ? "gap-2 text-5xl -mt-[10px] -mb-[5px]" 
                 : "gap-4 text-6xl 2xl:text-8xl -mt-[15px] -mb-[20px] 2xl:-mt-[20px] 2xl:-mb-[30px]"
             )}
           >
@@ -820,18 +989,18 @@ export default function App() {
                 className={cn(
                   "object-contain transition-all duration-500 border-none bg-transparent outline-none", 
                   uiMode === 'wood' 
-                    ? (queue.length > 0 ? "w-[180px] h-[180px]" : "w-[220px] h-[220px] 2xl:w-[300px] 2xl:h-[300px]")
-                    : (queue.length > 0 ? "w-[150px] h-[150px]" : "w-[180px] h-[180px] 2xl:w-[260px] 2xl:h-[260px]")
+                    ? (isPlayerActive ? "w-[180px] h-[180px]" : "w-[220px] h-[220px] 2xl:w-[300px] 2xl:h-[300px]")
+                    : (isPlayerActive ? "w-[150px] h-[150px]" : "w-[180px] h-[180px] 2xl:w-[260px] 2xl:h-[260px]")
                 )} 
               />
             </a>
             <span className={cn(
               "leading-none tracking-tight flex items-center justify-center transition-all duration-500 relative z-10", 
               uiMode === 'wood' ? "wood-logo font-semibold" : uiMode === 'retro' ? "paper-logo" : "font-display",
-              queue.length > 0 
+              isPlayerActive 
                 ? (uiMode === 'wood' ? "-mt-[25px] h-[50px]" : "-mt-2 h-[50px]") 
                 : (uiMode === 'wood' ? "-mt-[40px] 2xl:-mt-[60px] h-[70px] 2xl:h-[100px]" : "-mt-6 h-[70px] 2xl:-mt-10 2xl:h-[100px]"),
-              queue.length === 0 ? "text-7xl 2xl:text-9xl" : "text-5xl"
+              !isPlayerActive ? "text-7xl 2xl:text-9xl" : "text-5xl"
             )}>
               {uiMode === 'retro' ? (
                 <>
@@ -857,7 +1026,7 @@ export default function App() {
           </motion.div>
           
           {/* Add Playlist */}
-          {queue.length === 0 && (
+          {!isPlayerActive && (
             <div className="flex flex-col gap-2 2xl:gap-4 w-full">
               <div className={cn("text-sm 2xl:text-lg uppercase font-bold tracking-widest pb-1 2xl:pb-2", uiMode === 'retro' ? "text-[var(--retro-accent-text)] border-b-0 px-2" : "border-b-2 2xl:border-b-4 border-brutal-black")}>
                 {uiMode === 'retro' ? (
@@ -889,8 +1058,7 @@ export default function App() {
                   className="flex-1 bg-brutal-white border-2 2xl:border-4 border-brutal-black p-3 2xl:p-5 text-brutal-black font-bold text-sm 2xl:text-xl outline-none focus:bg-brutal-gray transition-colors placeholder:text-brutal-black/40 shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)]"
                   disabled={isLoading}
                 />
-                <button
-                  type="submit"
+                <button type="submit"
                   disabled={isLoading || !inputValue.trim()}
                   className="bg-brutal-white border-2 2xl:border-4 border-brutal-black text-brutal-black px-4 2xl:px-8 hover:bg-brutal-green disabled:opacity-50 transition-colors flex items-center justify-center shrink-0 shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
                 >
@@ -907,7 +1075,7 @@ export default function App() {
           )}
 
           {/* Playlists List */}
-          {queue.length === 0 && (
+          {!isPlayerActive && (
             <div className="flex flex-col gap-2 2xl:gap-4 shrink-0 max-h-[260px] 2xl:max-h-[400px] w-full">
               <div className={cn("text-sm 2xl:text-lg uppercase font-bold tracking-widest pb-1 2xl:pb-2 flex justify-between items-center shrink-0", uiMode === 'retro' ? "text-[var(--retro-accent-text)] border-b-0 px-2" : "border-b-2 2xl:border-b-4 border-brutal-black")}>
                 <div className="flex items-center gap-1">
@@ -932,7 +1100,7 @@ export default function App() {
                     <span>Your Playlists</span>
                   )}
                   {playlists.length > 0 && (
-                    <button 
+                    <div 
                       onClick={async (e) => {
                         e.stopPropagation();
                         setIsSyncing(true);
@@ -958,7 +1126,7 @@ export default function App() {
                       disabled={isSyncing}
                     >
                       <RefreshCw className={cn("w-4 h-4 2xl:w-5 2xl:h-5", isSyncing && "animate-spin")} />
-                    </button>
+                    </div>
                   )}
                 </div>
                 {uiMode === 'retro' ? (
@@ -992,7 +1160,7 @@ export default function App() {
                         </h3>
                         <p className="text-xs 2xl:text-sm font-bold text-brutal-black/60">{playlist.itemCount} VIDEOS</p>
                       </div>
-                      <button
+                      <div
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRemovePlaylist(playlist.id);
@@ -1001,7 +1169,7 @@ export default function App() {
                         title="Remove playlist"
                       >
                         <Trash2 className="w-5 h-5 2xl:w-7 2xl:h-7" />
-                      </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -1009,37 +1177,120 @@ export default function App() {
             </div>
           )}
 
+          {!isPlayerActive && (
+            <div className="mt-4 flex w-full px-2 lg:px-0">
+              <button onClick={() => setIsSongRequestMode(true)}
+                className="w-full flex items-center justify-center gap-3 2xl:gap-5 bg-brutal-white border-2 2xl:border-4 border-brutal-black p-4 2xl:p-6 group transition-colors hover:bg-brutal-gray shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+              >
+                {uiMode === 'retro' ? (
+                  <div className="paper-logo text-[1.4rem] 2xl:text-[1.8rem] px-2" style={{ textTransform: 'none' }}>
+                    <span style={{ color: '#f38883', transform: 'rotate(-2deg)' }}>R</span>
+                    <span style={{ color: '#fcaf6c', transform: 'translateY(-2px) rotate(1deg)' }}>e</span>
+                    <span style={{ color: '#b7d698', transform: 'translateY(1px) rotate(-1deg)' }}>q</span>
+                    <span style={{ color: '#7bb1db', transform: 'rotate(2deg)' }}>u</span>
+                    <span style={{ color: '#aa95c7', transform: 'translateY(-1px) rotate(-2deg)' }}>e</span>
+                    <span style={{ color: '#eb9dc5', transform: 'rotate(1deg)' }}>s</span>
+                    <span style={{ color: '#f5cb74', transform: 'translateY(2px) rotate(-1deg)' }}>t</span>
+                    <span style={{ display: 'inline-block', width: '0.4em' }}></span>
+                    <span style={{ color: '#89d07e', transform: 'rotate(2deg)' }}>L</span>
+                    <span style={{ color: '#eb9dc5', transform: 'translateY(-1px) rotate(-1deg)' }}>i</span>
+                    <span style={{ color: '#aa95c7', transform: 'rotate(1deg)' }}>s</span>
+                    <span style={{ color: '#f38883', transform: 'translateY(1px) rotate(-2deg)' }}>t</span>
+                  </div>
+                ) : (
+                  <span className="text-brutal-black font-bold uppercase text-lg 2xl:text-2xl tracking-widest">Request List</span>
+                )}
+              </button>
+            </div>
+          )}
+
           {/* Queue */}
-          {queue.length > 0 && (
-            <QueueComponent 
-              queue={queue} 
-              currentIndex={currentIndex} 
-              playSpecificVideo={playSpecificVideo} 
-              uiMode={uiMode}
-            />
+          {isPlayerActive && (
+            <>
+              {isSongRequestMode && (
+                <div className="flex flex-col gap-2 2xl:gap-4 w-full shrink-0">
+                  
+                    <div className="flex flex-col gap-2 2xl:gap-4 relative w-full">
+                      <form onSubmit={handleAddSongRequest} className="flex gap-2 2xl:gap-4 flex-1">
+                        <input
+                          type="text"
+                          placeholder="Add YouTube Video URL..."
+                          value={songRequestValue}
+                          onChange={(e) => setSongRequestValue(e.target.value)}
+                          className="flex-1 bg-brutal-white border-2 2xl:border-4 border-brutal-black p-2 2xl:p-3 text-brutal-black font-bold text-sm 2xl:text-lg outline-none focus:bg-brutal-gray transition-colors placeholder:text-brutal-black/40"
+                          disabled={isLoading}
+                        />
+                        <button type="submit"
+                          disabled={isLoading || !songRequestValue.trim()}
+                          className="bg-brutal-white border-2 2xl:border-4 border-brutal-black text-brutal-black px-3 2xl:px-4 hover:bg-brutal-green disabled:opacity-50 transition-colors flex items-center justify-center shrink-0 active:translate-x-[2px] active:translate-y-[2px]"
+                        >
+                          {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5 stroke-[3]" />}
+                        </button>
+                      </form>
+                      <button 
+                        type="button"
+                        onClick={() => setIsPlaylistDropdownOpen(!isPlaylistDropdownOpen)}
+                        className="w-full bg-brutal-white border-2 2xl:border-4 border-brutal-black text-brutal-black py-2 2xl:py-3 px-3 2xl:px-4 hover:bg-[var(--retro-accent)] hover:text-white transition-colors flex items-center justify-center shrink-0 active:translate-x-[2px] active:translate-y-[2px] whitespace-nowrap font-bold text-sm 2xl:text-lg uppercase tracking-widest shadow-[4px_4px_0_0_var(--color-brutal-black)]"
+                      >
+                        <Music className="w-4 h-4 mr-2" /> My Playlist
+                      </button>
+                      
+                      {isPlaylistDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-2 w-full bg-brutal-white border-2 2xl:border-4 border-brutal-black z-[100] shadow-[4px_4px_0_0_var(--color-brutal-black)] max-h-60 overflow-y-auto">
+                          {playlists.length > 0 ? playlists.map(p => (
+                            <div 
+                              key={p.id} 
+                              onClick={() => handleAddPlaylistItems(p)} 
+                              className="p-3 border-b-2 border-brutal-black hover:bg-brutal-green hover:text-white cursor-pointer truncate font-bold text-sm transition-colors"
+                            >
+                              {p.title}
+                            </div>
+                          )) : (
+                            <div className="p-3 text-sm text-center font-bold">No playlists added</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  {error && (
+                    <div className="bg-brutal-black text-brutal-white p-2 text-sm font-bold uppercase flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <p>{error}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              <QueueComponent 
+                queue={queue} 
+                currentIndex={currentIndex} 
+                playSpecificVideo={playSpecificVideo} 
+                restoreFromHistory={restoreFromHistory}
+                uiMode={uiMode}
+                isSongRequestMode={isSongRequestMode}
+              />
+            </>
           )}
         </div>
       </div>
 
         {/* Main View */}
-        {queue.length > 0 && (
+        {isPlayerActive && (
           <div className={cn(
             "flex flex-col gap-6 h-full overflow-hidden pt-8 lg:pt-0 transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] relative justify-center items-center w-full min-w-0"
           )}>
             
             {/* Toggle Sidebar Button (When Closed or Mobile) */}
             <div className={cn(
-              "z-50 w-full",
+              "z-50",
               isSidebarOpen 
-                ? "absolute -top-12 right-0 lg:hidden" 
-                : "fixed top-4 left-4"
+                ? "absolute -top-12 right-0 lg:hidden w-full" 
+                : "fixed top-4 left-4 w-auto"
             )}>
-              <button 
+              <div 
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 bg-brutal-white border-2 border-brutal-black hover:bg-brutal-green transition-colors shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+                className="inline-flex cursor-pointer p-2 bg-brutal-white border-2 border-brutal-black hover:bg-brutal-green transition-colors shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
               >
                 {isSidebarOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
-              </button>
+              </div>
             </div>
 
             {/* Player Area Wrapper */}
@@ -1091,11 +1342,17 @@ export default function App() {
                     )}
                   </>
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-brutal-white">
-                    <div className="w-20 h-20 bg-brutal-green border-4 border-brutal-white rounded-full flex items-center justify-center text-brutal-black mb-4">
-                      <Play className="w-10 h-10 ml-2 fill-current" />
-                    </div>
-                    <p className="font-display text-2xl tracking-widest uppercase">READY</p>
+                  <div className="flex flex-col items-center justify-center text-brutal-white text-center px-4">
+                    {isSongRequestMode && queue.length === 0 ? (
+                      <p className="font-bold text-xl md:text-2xl 2xl:text-4xl tracking-wider">(´･ω･`)? 노래를 추가해주세요!</p>
+                    ) : (
+                      <>
+                        <div className="w-20 h-20 bg-brutal-green border-4 border-brutal-white rounded-full flex items-center justify-center text-brutal-black mb-4">
+                          <Play className="w-10 h-10 ml-2 fill-current" />
+                        </div>
+                        <p className="font-display text-2xl tracking-widest uppercase">READY</p>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -1114,14 +1371,14 @@ export default function App() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4 2xl:gap-6 shrink-0 h-[52px] 2xl:h-[72px] px-6 -mx-6 py-8 -my-8">
-                        <button 
+                        <div 
                           onClick={handleShuffle}
                           className="p-3 2xl:p-4 bg-brutal-white border-2 2xl:border-4 border-brutal-black hover:bg-brutal-green transition-colors shadow-[2px_2px_0_0_var(--color-brutal-black)] 2xl:shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                           title="Shuffle Playlist"
                         >
                           <Shuffle className="w-6 h-6 2xl:w-8 2xl:h-8" />
-                        </button>
-                        <button 
+                        </div>
+                        <div 
                           onClick={() => setRepeatMode(prev => prev === 'off' ? 'one' : 'off')}
                           className={cn(
                             "p-3 2xl:p-4 border-2 2xl:border-4 border-brutal-black transition-colors shadow-[2px_2px_0_0_var(--color-brutal-black)] 2xl:shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
@@ -1130,17 +1387,13 @@ export default function App() {
                           title={`Repeat: ${repeatMode}`}
                         >
                           {repeatMode === 'one' ? <Repeat1 className="w-6 h-6 2xl:w-8 2xl:h-8" /> : <Repeat className="w-6 h-6 2xl:w-8 2xl:h-8" />}
-                        </button>
-                        <button 
-                          onClick={playPrevious}
+                        </div>
+                        <button onClick={playPrevious}
                           disabled={currentIndex === 0 && repeatMode !== 'all'}
                           className="p-3 2xl:p-4 bg-brutal-white border-2 2xl:border-4 border-brutal-black hover:bg-brutal-green disabled:opacity-30 transition-colors shadow-[2px_2px_0_0_var(--color-brutal-black)] 2xl:shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                         >
-                          <SkipBack className="w-6 h-6 2xl:w-8 2xl:h-8" />
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (isPlaying) {
+                          <SkipBack className="w-6 h-6 2xl:w-8 2xl:h-8" /></button>
+                        <button onClick={() => { if (isPlaying) {
                               playerRef.current?.pauseVideo();
                             } else {
                               playerRef.current?.playVideo();
@@ -1148,15 +1401,12 @@ export default function App() {
                           }}
                           className="w-[60px] h-[60px] 2xl:w-[80px] 2xl:h-[80px] bg-brutal-white text-brutal-black border-2 2xl:border-4 border-brutal-black flex items-center justify-center hover:bg-brutal-green transition-colors shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
                         >
-                          {isPlaying ? <Pause className="w-8 h-8 2xl:w-10 2xl:h-10 fill-current" /> : <Play className="w-8 h-8 2xl:w-10 2xl:h-10 fill-current ml-1" />}
-                        </button>
-                        <button 
-                          onClick={playNext}
+                          {isPlaying ? <Pause className="w-8 h-8 2xl:w-10 2xl:h-10 fill-current" /> : <Play className="w-8 h-8 2xl:w-10 2xl:h-10 fill-current ml-1" />}</button>
+                        <button onClick={playNext}
                           disabled={currentIndex === queue.length - 1 && repeatMode !== 'all'}
                           className="p-3 2xl:p-4 bg-brutal-white border-2 2xl:border-4 border-brutal-black hover:bg-brutal-green disabled:opacity-30 transition-colors shadow-[2px_2px_0_0_var(--color-brutal-black)] 2xl:shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                         >
-                          <SkipForward className="w-6 h-6 2xl:w-8 2xl:h-8" />
-                        </button>
+                          <SkipForward className="w-6 h-6 2xl:w-8 2xl:h-8" /></button>
                       </div>
                     </div>
                   </div>
@@ -1188,13 +1438,67 @@ export default function App() {
             </div>
 
             {/* Queue (Shown below player when sidebar is closed) */}
-            {!isSidebarOpen && queue.length > 0 && (
+            {!isSidebarOpen && isPlayerActive && (
               <div className="w-full h-[500px] 2xl:h-[700px] flex flex-col">
+                {isSongRequestMode && (
+                  <div className="flex flex-col gap-2 2xl:gap-4 w-full shrink-0 mb-4">
+                    
+                    <div className="flex flex-col gap-2 2xl:gap-4 relative w-full">
+                      <form onSubmit={handleAddSongRequest} className="flex gap-2 2xl:gap-4 flex-1">
+                        <input
+                          type="text"
+                          placeholder="Add YouTube Video URL..."
+                          value={songRequestValue}
+                          onChange={(e) => setSongRequestValue(e.target.value)}
+                          className="flex-1 bg-brutal-white border-2 2xl:border-4 border-brutal-black p-2 2xl:p-3 text-brutal-black font-bold text-sm 2xl:text-lg outline-none focus:bg-brutal-gray transition-colors placeholder:text-brutal-black/40"
+                          disabled={isLoading}
+                        />
+                        <button type="submit"
+                          disabled={isLoading || !songRequestValue.trim()}
+                          className="bg-brutal-white border-2 2xl:border-4 border-brutal-black text-brutal-black px-3 2xl:px-4 hover:bg-brutal-green disabled:opacity-50 transition-colors flex items-center justify-center shrink-0 active:translate-x-[2px] active:translate-y-[2px]"
+                        >
+                          {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5 stroke-[3]" />}
+                        </button>
+                      </form>
+                      <button 
+                        type="button"
+                        onClick={() => setIsPlaylistDropdownOpen(!isPlaylistDropdownOpen)}
+                        className="w-full bg-brutal-white border-2 2xl:border-4 border-brutal-black text-brutal-black py-2 2xl:py-3 px-3 2xl:px-4 hover:bg-[var(--retro-accent)] hover:text-white transition-colors flex items-center justify-center shrink-0 active:translate-x-[2px] active:translate-y-[2px] whitespace-nowrap font-bold text-sm 2xl:text-lg uppercase tracking-widest shadow-[4px_4px_0_0_var(--color-brutal-black)]"
+                      >
+                        <Music className="w-4 h-4 mr-2" /> My Playlist
+                      </button>
+                      
+                      {isPlaylistDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-2 w-full bg-brutal-white border-2 2xl:border-4 border-brutal-black z-[100] shadow-[4px_4px_0_0_var(--color-brutal-black)] max-h-60 overflow-y-auto">
+                          {playlists.length > 0 ? playlists.map(p => (
+                            <div 
+                              key={p.id} 
+                              onClick={() => handleAddPlaylistItems(p)} 
+                              className="p-3 border-b-2 border-brutal-black hover:bg-brutal-green hover:text-white cursor-pointer truncate font-bold text-sm transition-colors"
+                            >
+                              {p.title}
+                            </div>
+                          )) : (
+                            <div className="p-3 text-sm text-center font-bold">No playlists added</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {error && (
+                      <div className="bg-brutal-black text-brutal-white p-2 text-sm font-bold uppercase flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <p>{error}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <QueueComponent 
                   queue={queue} 
                   currentIndex={currentIndex} 
                   playSpecificVideo={playSpecificVideo} 
+                  restoreFromHistory={restoreFromHistory}
                   uiMode={uiMode}
+                  isSongRequestMode={isSongRequestMode}
                 />
               </div>
             )}
@@ -1260,7 +1564,7 @@ export default function App() {
 
                 {/* Wheel Volume Toggle */}
                 <div className="flex flex-col items-center gap-2">
-                  <button
+                  <div
                     onClick={() => setIsOverlayEnabled(prev => !prev)}
                     className={cn(
                       "settings-btn w-full h-12 rounded-lg flex items-center justify-center transition-colors",
@@ -1268,7 +1572,7 @@ export default function App() {
                     )}
                   >
                     <Mouse className="w-5 h-5" />
-                  </button>
+                  </div>
                   <span className="text-xs text-white font-medium">휠 볼륨</span>
                 </div>
 
@@ -1302,33 +1606,27 @@ export default function App() {
               <div className="mt-2 border-t border-white/10 pt-2">
                 <div className="mb-4 text-xs text-white text-center font-medium">테마 선택</div>
                 <div className="grid grid-cols-3 gap-x-3">
-                  <button 
-                    onClick={() => setUiMode('retro')}
+                  <button onClick={() => setUiMode('retro')}
                     className={cn(
                       "settings-btn w-full h-12 rounded-lg flex items-center justify-center transition-colors text-sm font-bold",
                       uiMode === 'retro' ? "bg-[#4cc2ff] text-black" : "bg-white/10 text-white hover:bg-white/20 border border-white/10"
                     )}
                   >
-                    1
-                  </button>
-                  <button 
-                    onClick={() => setUiMode('wood')}
+                    1</button>
+                  <button onClick={() => setUiMode('wood')}
                     className={cn(
                       "settings-btn w-full h-12 rounded-lg flex items-center justify-center transition-colors text-sm font-bold",
                       uiMode === 'wood' ? "bg-[#4cc2ff] text-black" : "bg-white/10 text-white hover:bg-white/20 border border-white/10"
                     )}
                   >
-                    2
-                  </button>
-                  <button 
-                    onClick={() => setUiMode('acrobatic')}
+                    2</button>
+                  <button onClick={() => setUiMode('acrobatic')}
                     className={cn(
                       "settings-btn w-full h-12 rounded-lg flex items-center justify-center transition-colors text-sm font-bold",
                       uiMode === 'acrobatic' ? "bg-[#4cc2ff] text-black" : "bg-white/10 text-white hover:bg-white/20 border border-white/10"
                     )}
                   >
-                    3
-                  </button>
+                    3</button>
                 </div>
               </div>
             </motion.div>
@@ -1339,13 +1637,13 @@ export default function App() {
       {/* Settings Toggle Button */}
       {!isRadioMode && (
         <>
-          <button
+          <div
             onClick={() => setIsSettingsOpen(prev => !prev)}
             className="settings-toggle-btn fixed bottom-4 right-4 2xl:bottom-8 2xl:right-8 p-2 2xl:p-3 bg-brutal-white border-2 2xl:border-4 border-brutal-black hover:bg-brutal-gray transition-colors z-50 rounded-full shadow-[4px_4px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
             title="Settings"
           >
           <Settings className="w-5 h-5 2xl:w-6 2xl:h-6 text-brutal-black" />
-        </button>
+        </div>
         </>
       )}
 
@@ -1364,9 +1662,9 @@ export default function App() {
           <div className="relative z-10 w-full max-w-[360px] md:max-w-[420px] lg:max-w-[460px] h-full flex flex-col px-6 py-6 md:py-8 lg:py-10 justify-center">
             {/* Top Bar */}
             <div className="flex justify-center items-center w-full text-white/90 mb-6 md:mb-8 lg:mb-10">
-              <button onClick={() => setIsRadioMode(false)} className="radio-btn p-2 hover:bg-white/10 rounded-full transition-colors">
+              <div onClick={() => setIsRadioMode(false)} className="radio-btn p-2 hover:bg-white/10 rounded-full transition-colors">
                 <X className="w-8 h-8" />
-              </button>
+              </div>
             </div>
 
             {/* Thumbnail */}
@@ -1434,10 +1732,10 @@ export default function App() {
             {/* Controls */}
             <div className="w-full flex justify-center items-center px-2 md:px-6 mb-6 md:mb-10">
               <div className="flex items-center gap-6 md:gap-8 lg:gap-10">
-                <button onClick={playPrevious} className="radio-btn text-white transition-colors active:scale-95">
+                <div onClick={playPrevious} className="radio-btn text-white transition-colors active:scale-95">
                   <SkipBack className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 fill-current" />
-                </button>
-                <button 
+                </div>
+                <div 
                   onClick={() => {
                     if (isPlaying) playerRef.current?.pauseVideo();
                     else playerRef.current?.playVideo();
@@ -1445,10 +1743,10 @@ export default function App() {
                   className="radio-btn text-white transition-transform active:scale-95"
                 >
                   {isPlaying ? <Pause className="w-10 h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 fill-current" /> : <Play className="w-10 h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 fill-current ml-1" />}
-                </button>
-                <button onClick={playNext} className="radio-btn text-white transition-colors active:scale-95">
+                </div>
+                <div onClick={playNext} className="radio-btn text-white transition-colors active:scale-95">
                   <SkipForward className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 fill-current" />
-                </button>
+                </div>
               </div>
             </div>
 

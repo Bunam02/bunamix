@@ -106,6 +106,50 @@ export async function fetchPlaylistItems(playlistId: string): Promise<PlaylistIt
   }
 }
 
+export async function fetchVideoInfo(videoId: string): Promise<PlaylistItem> {
+  const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${encodeURIComponent(videoId)}&key=${YOUTUBE_API_KEY}`;
+  let response;
+  try {
+    response = await fetch(url);
+  } catch (e: any) {
+    throw new Error('Network error: ' + e.message);
+  }
+  
+  const contentType = response.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    throw new Error(`API server is temporarily unavailable or returned an invalid response. Please try again.`);
+  }
+
+  const data = await response.json();
+
+  if (!response.ok || data.error) {
+    throw new Error(data.error?.message || 'Unknown YouTube API error');
+  }
+
+  if (!data.items || data.items.length === 0) {
+    throw new Error('Video not found or is private.');
+  }
+
+  const item = data.items[0];
+  return {
+    id: item.id,
+    videoId: item.id,
+    title: item.snippet.title,
+    thumbnail: item.snippet.thumbnails?.maxres?.url || item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
+    channelTitle: item.snippet.channelTitle || 'Unknown Channel',
+    playlistId: 'custom_requests'
+  };
+}
+
+export function extractVideoId(urlOrId: string): string | null {
+  if (!urlOrId) return null;
+  if (/^[a-zA-Z0-9_-]{11}$/.test(urlOrId) && !urlOrId.includes('http')) {
+    return urlOrId;
+  }
+  const match = urlOrId.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})(?:\?|&|\/|$)/);
+  return match ? match[1] : null;
+}
+
 export function extractPlaylistId(urlOrId: string): string | null {
   if (!urlOrId) return null;
   
