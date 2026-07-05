@@ -1180,7 +1180,7 @@ export default function App() {
           {!isPlayerActive && (
             <div className="mt-4 flex w-full px-2 lg:px-0">
               <button onClick={() => setIsSongRequestMode(true)}
-                className="w-full flex items-center justify-center gap-3 2xl:gap-5 bg-brutal-white border-2 2xl:border-4 border-brutal-black p-4 2xl:p-6 group transition-colors hover:bg-brutal-gray shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+                className="w-full flex items-center justify-center gap-3 2xl:gap-5 bg-brutal-white border-2 2xl:border-4 border-brutal-black p-4 2xl:p-6 group transition-colors hover:bg-brutal-gray shadow-[4px_4px_0_0_var(--color-brutal-black)] 2xl:shadow-[6px_6px_0_0_var(--color-brutal-black)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none no-anim"
               >
                 {uiMode === 'retro' ? (
                   <div className="paper-logo text-[1.4rem] 2xl:text-[1.8rem] px-2" style={{ textTransform: 'none' }}>
@@ -1230,18 +1230,18 @@ export default function App() {
                       <button 
                         type="button"
                         onClick={() => setIsPlaylistDropdownOpen(!isPlaylistDropdownOpen)}
-                        className="w-full bg-brutal-white border-2 2xl:border-4 border-brutal-black text-brutal-black py-2 2xl:py-3 px-3 2xl:px-4 hover:bg-[var(--retro-accent)] hover:text-white transition-colors flex items-center justify-center shrink-0 active:translate-x-[2px] active:translate-y-[2px] whitespace-nowrap font-bold text-sm 2xl:text-lg uppercase tracking-widest shadow-[4px_4px_0_0_var(--color-brutal-black)]"
+                        className="w-full bg-brutal-white border-2 2xl:border-4 border-brutal-black text-brutal-black py-2 2xl:py-3 px-3 2xl:px-4 hover:bg-[var(--retro-accent)] hover:text-white transition-colors flex items-center justify-center shrink-0 active:translate-x-[2px] active:translate-y-[2px] whitespace-nowrap font-bold text-sm 2xl:text-lg uppercase tracking-widest shadow-[4px_4px_0_0_var(--color-brutal-black)] no-anim"
                       >
                         <Music className="w-4 h-4 mr-2" /> My Playlist
                       </button>
                       
                       {isPlaylistDropdownOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-2 w-full bg-brutal-white border-2 2xl:border-4 border-brutal-black z-[100] shadow-[4px_4px_0_0_var(--color-brutal-black)] max-h-60 overflow-y-auto">
+                        <div className="absolute top-full left-0 right-0 mt-2 w-full bg-brutal-white border-2 2xl:border-4 border-brutal-black z-[100] shadow-[4px_4px_0_0_var(--color-brutal-black)] max-h-60 overflow-y-auto dropdown-menu">
                           {playlists.length > 0 ? playlists.map(p => (
                             <div 
                               key={p.id} 
                               onClick={() => handleAddPlaylistItems(p)} 
-                              className="p-3 border-b-2 border-brutal-black hover:bg-brutal-green hover:text-white cursor-pointer truncate font-bold text-sm transition-colors"
+                              className="p-3 border-b-2 border-brutal-black hover:bg-brutal-green hover:text-white cursor-pointer truncate font-bold text-sm transition-colors dropdown-item"
                             >
                               {p.title}
                             </div>
@@ -1463,18 +1463,18 @@ export default function App() {
                       <button 
                         type="button"
                         onClick={() => setIsPlaylistDropdownOpen(!isPlaylistDropdownOpen)}
-                        className="w-full bg-brutal-white border-2 2xl:border-4 border-brutal-black text-brutal-black py-2 2xl:py-3 px-3 2xl:px-4 hover:bg-[var(--retro-accent)] hover:text-white transition-colors flex items-center justify-center shrink-0 active:translate-x-[2px] active:translate-y-[2px] whitespace-nowrap font-bold text-sm 2xl:text-lg uppercase tracking-widest shadow-[4px_4px_0_0_var(--color-brutal-black)]"
+                        className="w-full bg-brutal-white border-2 2xl:border-4 border-brutal-black text-brutal-black py-2 2xl:py-3 px-3 2xl:px-4 hover:bg-[var(--retro-accent)] hover:text-white transition-colors flex items-center justify-center shrink-0 active:translate-x-[2px] active:translate-y-[2px] whitespace-nowrap font-bold text-sm 2xl:text-lg uppercase tracking-widest shadow-[4px_4px_0_0_var(--color-brutal-black)] no-anim"
                       >
                         <Music className="w-4 h-4 mr-2" /> My Playlist
                       </button>
                       
                       {isPlaylistDropdownOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-2 w-full bg-brutal-white border-2 2xl:border-4 border-brutal-black z-[100] shadow-[4px_4px_0_0_var(--color-brutal-black)] max-h-60 overflow-y-auto">
+                        <div className="absolute top-full left-0 right-0 mt-2 w-full bg-brutal-white border-2 2xl:border-4 border-brutal-black z-[100] shadow-[4px_4px_0_0_var(--color-brutal-black)] max-h-60 overflow-y-auto dropdown-menu">
                           {playlists.length > 0 ? playlists.map(p => (
                             <div 
                               key={p.id} 
                               onClick={() => handleAddPlaylistItems(p)} 
-                              className="p-3 border-b-2 border-brutal-black hover:bg-brutal-green hover:text-white cursor-pointer truncate font-bold text-sm transition-colors"
+                              className="p-3 border-b-2 border-brutal-black hover:bg-brutal-green hover:text-white cursor-pointer truncate font-bold text-sm transition-colors dropdown-item"
                             >
                               {p.title}
                             </div>
